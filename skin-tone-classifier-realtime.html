@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Skin Tone Classifier & Makeup Shade Recommender</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <script src="face-api.min.js"></script>
+    <script src="face-api.min.js.map"></script>
+    <style>
+      body {
+        background: #f7f7f7;
+        font-family: "Montserrat", Arial, sans-serif;
+      }
+      .neo-brutal {
+        background: #fff;
+        border: 4px solid #222;
+        border-radius: 18px;
+        box-shadow: 8px 8px 0 #222;
+        padding: 2rem;
+        margin-bottom: 2rem;
+      }
+      .neo-btn {
+        background: #ffde03;
+        color: #222;
+        border: 3px solid #222;
+        border-radius: 10px;
+        font-weight: bold;
+        box-shadow: 4px 4px 0 #222;
+        transition: 0.1s;
+      }
+      .neo-btn:active {
+        box-shadow: 1px 1px 0 #222;
+        transform: translate(2px, 2px);
+      }
+      .canvas-preview,
+      #videoPreview {
+        max-width: 320px;
+        border-radius: 12px;
+        border: 3px solid #222;
+        box-shadow: 4px 4px 0 #222;
+        margin-bottom: 1rem;
+        background: #fff;
+      }
+      .shade-info {
+        background: #ffde03;
+        border-left: 6px solid #222;
+        padding: 1rem;
+        border-radius: 10px;
+        font-weight: bold;
+        color: #222;
+        box-shadow: 4px 4px 0 #222;
+      }
+      .countdown {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #e63946;
+        margin-bottom: 1rem;
+      }
+      .face-box {
+        position: absolute;
+        border: 3px solid #27ae60;
+        border-radius: 8px;
+        pointer-events: none;
+      }
+      .relative {
+        position: relative;
+        display: inline-block;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container py-4">
+      <div class="neo-brutal">
+        <h1 class="mb-3">Skin Tone Classifier & Makeup Shade Recommender</h1>
+        <p class="lead">
+          Aplikasi web untuk klasifikasi warna kulit dan rekomendasi shade make
+          up berbasis pengolahan citra digital manual.
+        </p>
+        <div class="mb-4">
+          <label for="imageInput" class="form-label"
+            >Upload Foto Wajah (JPG/PNG):</label
+          >
+          <input
+            class="form-control"
+            type="file"
+            id="imageInput"
+            accept="image/*"
+          />
+          <div class="form-text">Atau gunakan kamera di bawah ini.</div>
+        </div>
+        <div class="mb-3">
+          <label for="cameraSelect" class="form-label">Pilih Kamera:</label>
+          <select class="form-select" id="cameraSelect"></select>
+          <button class="neo-btn mt-2" id="startCameraBtn">
+            Aktifkan Kamera
+          </button>
+          <button class="neo-btn mt-2" id="captureBtn" disabled>
+            Ambil 5 Foto (5 Detik)
+          </button>
+          <div id="cameraStatus" class="form-text"></div>
+          <div class="relative">
+            <video
+              id="videoPreview"
+              autoplay
+              playsinline
+              style="display: none"
+            ></video>
+            <canvas
+              id="faceCanvas"
+              style="position: absolute; left: 0; top: 0; display: none"
+            ></canvas>
+          </div>
+          <div class="countdown" id="countdown"></div>
+        </div>
+        <div id="imagePreview" class="mb-4"></div>
+        <button class="neo-btn mb-3" id="processBtn" disabled>
+          Proses Gambar
+        </button>
+        <div id="results"></div>
+      </div>
+      <div class="neo-brutal">
+        <h3>Deskripsi Proyek</h3>
+        <p>
+          Proyek ini mengimplementasikan pengolahan citra digital secara manual
+          di browser menggunakan JavaScript dan HTML5 Canvas. Semua algoritma
+          utama dikerjakan tanpa library image processing khusus, sehingga
+          seluruh proses dapat dipelajari secara mendalam.
+        </p>
+        <h3>Alur Kerja</h3>
+        <ol>
+          <li>Upload gambar wajah atau gunakan kamera.</li>
+          <li>
+            Gambar diproses: grayscale, gaussian blur, noise, edge, segmentasi,
+            klasifikasi warna kulit.
+          </li>
+          <li>Hasil tiap tahap divisualisasikan.</li>
+          <li>Rekomendasi shade make up diberikan.</li>
+        </ol>
+      </div>
+    </div>
+    <script>
+      // Tunggu faceapi siap sebelum menjalankan kode utama
+      function waitForFaceApiReady(cb) {
+        if (window.faceapi) cb();
+        else setTimeout(() => waitForFaceApiReady(cb), 100);
+      }
+      waitForFaceApiReady(function () {
+        let imgDataUrl = null;
+        let imgElement = null;
+        let stream = null;
+        let currentDeviceId = null;
+        let faceDetModelLoaded = false;
+        let faceBoxes = [];
+        let capturedImages = [];
+
+        // Kamera: Enumerasi device
+        async function updateCameraList() {
+          const select = document.getElementById("cameraSelect");
+          select.innerHTML = "";
+          try {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const videoDevices = devices.filter((d) => d.kind === "videoinput");
+            videoDevices.forEach((device, idx) => {
+              const option = document.createElement("option");
+              option.value = device.deviceId;
+              let label = device.label || `Kamera ${idx + 1}`;
+              if (label.toLowerCase().includes("back"))
+                label = `Kamera Belakang`;
+              if (label.toLowerCase().includes("front")) label = `Kamera Depan`;
+              option.text = label;
+              select.appendChild(option);
+            });
+            if (videoDevices.length === 0) {
+              select.innerHTML =
+                '<option value="">Tidak ada kamera terdeteksi</option>';
+            }
+          } catch (e) {
+            select.innerHTML =
+              '<option value="">Tidak bisa mengakses kamera</option>';
+          }
+        }
+        updateCameraList();
+        navigator.mediaDevices.addEventListener(
+          "devicechange",
+          updateCameraList
+        );
+
+        // Load face-api.js models
+        async function loadFaceModel() {
+          if (faceDetModelLoaded) return;
+          await faceapi.nets.tinyFaceDetector.loadFromUri('./weights');
+          faceDetModelLoaded = true;
+        }
+        loadFaceModel();
+
+        document.getElementById("startCameraBtn").onclick = async function () {
+          const select = document.getElementById("cameraSelect");
+          const deviceId = select.value;
+          if (!deviceId) return;
+          if (stream) {
+            stream.getTracks().forEach((track) => track.stop());
+          }
+          try {
+            stream = await navigator.mediaDevices.getUserMedia({
+              video: { deviceId: { exact: deviceId } },
+              audio: false,
+            });
+            currentDeviceId = deviceId;
+            const video = document.getElementById("videoPreview");
+            video.srcObject = stream;
+            video.style.display = "block";
+            document.getElementById("captureBtn").disabled = false;
+            document.getElementById("cameraStatus").textContent =
+              "Kamera aktif.";
+            document.getElementById("faceCanvas").style.display = "block";
+            detectFaceLoop();
+          } catch (e) {
+            document.getElementById("cameraStatus").textContent =
+              "Gagal mengaktifkan kamera.";
+          }
+        };
+
+        async function detectFaceLoop() {
+          const video = document.getElementById("videoPreview");
+          const canvas = document.getElementById("faceCanvas");
+          if (!faceDetModelLoaded) await loadFaceModel();
+          function drawFaceBox(box) {
+            const ctx = canvas.getContext("2d");
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (box) {
+              ctx.strokeStyle = "#27ae60";
+              ctx.lineWidth = 3;
+              ctx.strokeRect(box.x, box.y, box.width, box.height);
+            }
+          }
+          async function loop() {
+            if (video.readyState === 4) {
+              canvas.width = video.videoWidth;
+              canvas.height = video.videoHeight;
+              const detections = await faceapi.detectSingleFace(
+                video,
+                new faceapi.TinyFaceDetectorOptions()
+              );
+              if (detections) {
+                drawFaceBox(detections.box);
+                faceBoxes[0] = detections.box;
+              } else {
+                drawFaceBox(null);
+                faceBoxes[0] = null;
+              }
+            }
+            requestAnimationFrame(loop);
+          }
+          loop();
+        }
+
+        document.getElementById("captureBtn").onclick = async function () {
+          capturedImages = [];
+          let countdown = document.getElementById("countdown");
+          countdown.textContent = "";
+          for (let i = 5; i >= 1; i--) {
+            countdown.textContent = `Ambil foto dalam ${i} detik...`;
+            await new Promise((r) => setTimeout(r, 1000));
+            // Ambil foto
+            const video = document.getElementById("videoPreview");
+            let canvas = document.createElement("canvas");
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            let ctx = canvas.getContext("2d");
+            ctx.drawImage(video, 0, 0);
+            // Jika deteksi wajah, crop ke area wajah
+            let box = faceBoxes[0];
+            if (box) {
+              let margin = 0.2; // 20% margin
+              let x = Math.max(0, box.x - box.width * margin);
+              let y = Math.max(0, box.y - box.height * margin);
+              let w = Math.min(canvas.width - x, box.width * (1 + 2 * margin));
+              let h = Math.min(
+                canvas.height - y,
+                box.height * (1 + 2 * margin)
+              );
+              let faceCanvas = document.createElement("canvas");
+              faceCanvas.width = 256;
+              faceCanvas.height = 256;
+              faceCanvas
+                .getContext("2d")
+                .drawImage(canvas, x, y, w, h, 0, 0, 256, 256);
+              capturedImages.push(faceCanvas.toDataURL("image/png"));
+            } else {
+              // Jika tidak ada wajah, simpan full frame
+              capturedImages.push(canvas.toDataURL("image/png"));
+            }
+          }
+          countdown.textContent = "Foto selesai!";
+          // Preview 5 foto
+          let previewDiv = document.getElementById("imagePreview");
+          previewDiv.innerHTML = capturedImages
+            .map(
+              (url, i) =>
+                `<img src="${url}" class="result-img me-2 mb-2" style="max-width:120px;">`
+            )
+            .join("");
+          document.getElementById("processBtn").disabled = false;
+        };
+
+        document
+          .getElementById("imageInput")
+          .addEventListener("change", function (e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function (ev) {
+              imgDataUrl = ev.target.result;
+              document.getElementById(
+                "imagePreview"
+              ).innerHTML = `<img src="${imgDataUrl}" id="previewImg" class="result-img" style="max-width:300px;">`;
+              document.getElementById("processBtn").disabled = false;
+              capturedImages = [imgDataUrl];
+            };
+            reader.readAsDataURL(file);
+          });
+
+        function drawToCanvas(img, processFn, caption) {
+          let canvas = document.createElement("canvas");
+          let ctx = canvas.getContext("2d");
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.drawImage(img, 0, 0);
+          if (processFn) {
+            let imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            processFn(imgData);
+            ctx.putImageData(imgData, 0, 0);
+          }
+          let div = document.createElement("div");
+          div.appendChild(canvas);
+          if (caption) {
+            let cap = document.createElement("div");
+            cap.innerHTML = `<small>${caption}</small>`;
+            div.appendChild(cap);
+          }
+          return div;
+        }
+
+        function grayscale(imgData) {
+          for (let i = 0; i < imgData.data.length; i += 4) {
+            let r = imgData.data[i],
+              g = imgData.data[i + 1],
+              b = imgData.data[i + 2];
+            let gray = 0.299 * r + 0.587 * g + 0.114 * b;
+            imgData.data[i] = imgData.data[i + 1] = imgData.data[i + 2] = gray;
+          }
+        }
+
+        function gaussianBlur(imgData) {
+          // Gaussian blur kernel 3x3
+          let w = imgData.width,
+            h = imgData.height;
+          let src = new Uint8ClampedArray(imgData.data);
+          let kernel = [1, 2, 1, 2, 4, 2, 1, 2, 1];
+          let ksum = 16;
+          for (let y = 1; y < h - 1; y++) {
+            for (let x = 1; x < w - 1; x++) {
+              for (let c = 0; c < 3; c++) {
+                let sum = 0,
+                  idx = 0;
+                for (let dy = -1; dy <= 1; dy++)
+                  for (let dx = -1; dx <= 1; dx++)
+                    sum +=
+                      src[4 * ((y + dy) * w + (x + dx)) + c] * kernel[idx++];
+                imgData.data[4 * (y * w + x) + c] = sum / ksum;
+              }
+            }
+          }
+        }
+
+        function addNoise(imgData) {
+          for (let i = 0; i < imgData.data.length; i += 4) {
+            let noise = (Math.random() - 0.5) * 40;
+            imgData.data[i] = Math.min(
+              255,
+              Math.max(0, imgData.data[i] + noise)
+            );
+            imgData.data[i + 1] = Math.min(
+              255,
+              Math.max(0, imgData.data[i + 1] + noise)
+            );
+            imgData.data[i + 2] = Math.min(
+              255,
+              Math.max(0, imgData.data[i + 2] + noise)
+            );
+          }
+        }
+
+        function sobelEdge(imgData) {
+          let w = imgData.width,
+            h = imgData.height;
+          let src = new Uint8ClampedArray(imgData.data);
+          let gx = [-1, 0, 1, -2, 0, 2, -1, 0, 1];
+          let gy = [-1, -2, -1, 0, 0, 0, 1, 2, 1];
+          for (let y = 1; y < h - 1; y++) {
+            for (let x = 1; x < w - 1; x++) {
+              let sx = 0,
+                sy = 0;
+              for (let ky = -1; ky <= 1; ky++) {
+                for (let kx = -1; kx <= 1; kx++) {
+                  let val = src[4 * ((y + ky) * w + (x + kx))];
+                  let idx = (ky + 1) * 3 + (kx + 1);
+                  sx += gx[idx] * val;
+                  sy += gy[idx] * val;
+                }
+              }
+              let mag = Math.sqrt(sx * sx + sy * sy);
+              imgData.data[4 * (y * w + x)] =
+                imgData.data[4 * (y * w + x) + 1] =
+                imgData.data[4 * (y * w + x) + 2] =
+                  mag;
+            }
+          }
+        }
+
+        function segmentSkin(imgData) {
+          for (let i = 0; i < imgData.data.length; i += 4) {
+            let r = imgData.data[i],
+              g = imgData.data[i + 1],
+              b = imgData.data[i + 2];
+            if (
+              !(
+                r > 95 &&
+                g > 40 &&
+                b > 20 &&
+                r > g &&
+                r > b &&
+                Math.abs(r - g) > 15
+              )
+            ) {
+              imgData.data[i] = imgData.data[i + 1] = imgData.data[i + 2] = 128;
+            }
+          }
+        }
+
+        function classifySkinTone(imgData) {
+          let total = 0,
+            sumR = 0,
+            sumG = 0,
+            sumB = 0;
+          for (let i = 0; i < imgData.data.length; i += 4) {
+            let r = imgData.data[i],
+              g = imgData.data[i + 1],
+              b = imgData.data[i + 2];
+            if (!(r === 128 && g === 128 && b === 128)) {
+              sumR += r;
+              sumG += g;
+              sumB += b;
+              total++;
+            }
+          }
+          if (total === 0)
+            return {
+              tone: "Tidak Terdeteksi",
+              shade: "-",
+              info: "-",
+              link: "#",
+            };
+          let mean = (sumR + sumG + sumB) / (3 * total);
+          if (mean > 180) {
+            return {
+              tone: "White",
+              shade: "Porcelain / Ivory",
+              info: "Cocok untuk bedak shade Porcelain, Ivory, Light Beige.",
+              link: "https://www.google.com/search?q=bedak+terbaik+untuk+kulit+putih+light+porcelain+ivory",
+            };
+          } else if (mean > 100) {
+            return {
+              tone: "Brown/Tan/Medium",
+              shade: "Beige / Natural / Tan",
+              info: "Cocok untuk bedak shade Natural, Beige, Honey, Tan, Medium.",
+              link: "https://www.google.com/search?q=bedak+terbaik+untuk+kulit+sawo+matang+tan+medium+beige+natural",
+            };
+          } else {
+            return {
+              tone: "Black",
+              shade: "Tan / Cocoa",
+              info: "Cocok untuk bedak shade Tan, Cocoa, Espresso.",
+              link: "https://www.google.com/search?q=bedak+terbaik+untuk+kulit+gelap+tan+cocoa+espresso",
+            };
+          }
+        }
+
+        document
+          .getElementById("processBtn")
+          .addEventListener("click", function () {
+            let resultsDiv = document.getElementById("results");
+            resultsDiv.innerHTML = "";
+            if (capturedImages.length > 1) {
+              // Proses 5 foto
+              let summary = { White: 0, Brown: 0, Black: 0 };
+              capturedImages.forEach((url, idx) => {
+                let img = new window.Image();
+                img.src = url;
+                img.onload = function () {
+                  let div = document.createElement("div");
+                  div.innerHTML = `<b>Foto ke-${idx + 1}</b>`;
+                  resultsDiv.appendChild(div);
+                  resultsDiv.appendChild(
+                    drawToCanvas(img, null, "1. Gambar Asli")
+                  );
+                  resultsDiv.appendChild(
+                    drawToCanvas(img, grayscale, "2. Grayscale")
+                  );
+                  resultsDiv.appendChild(
+                    drawToCanvas(img, gaussianBlur, "3. Gaussian Blur")
+                  );
+                  resultsDiv.appendChild(
+                    drawToCanvas(img, addNoise, "4. Gaussian Noise")
+                  );
+                  resultsDiv.appendChild(
+                    drawToCanvas(
+                      img,
+                      function (imgData) {
+                        grayscale(imgData);
+                        sobelEdge(imgData);
+                      },
+                      "5. Sobel Edge"
+                    )
+                  );
+                  let skinDiv = drawToCanvas(
+                    img,
+                    segmentSkin,
+                    "6. Segmentasi Kulit (Threshold RGB)"
+                  );
+                  resultsDiv.appendChild(skinDiv);
+                  let skinCanvas = skinDiv.querySelector("canvas");
+                  let ctx = skinCanvas.getContext("2d");
+                  let skinData = ctx.getImageData(
+                    0,
+                    0,
+                    skinCanvas.width,
+                    skinCanvas.height
+                  );
+                  let toneResult = classifySkinTone(skinData);
+                  summary[toneResult.tone.split("/")[0]]++;
+                  let shadeDiv = document.createElement("div");
+                  shadeDiv.className = "shade-info mt-3";
+                  shadeDiv.innerHTML = `<b>Warna Kulit Terdeteksi:</b> ${toneResult.tone}<br><b>Shade Make Up Rekomendasi:</b> ${toneResult.shade}<br><b>Info Bedak:</b> ${toneResult.info}<br><a href="${toneResult.link}" target="_blank">Lihat Bedak Rekomendasi di Google</a>`;
+                  resultsDiv.appendChild(shadeDiv);
+                  if (idx === capturedImages.length - 1) {
+                    // Summary
+                    let total = summary.White + summary.Brown + summary.Black;
+                    let summaryDiv = document.createElement("div");
+                    summaryDiv.className = "shade-info mt-3";
+                    summaryDiv.innerHTML = `<b>Summary 5 Foto:</b><br>White: ${(
+                      (summary.White / total) *
+                      100
+                    ).toFixed(1)}%<br>Brown/Tan/Medium: ${(
+                      (summary.Brown / total) *
+                      100
+                    ).toFixed(1)}%<br>Black: ${(
+                      (summary.Black / total) *
+                      100
+                    ).toFixed(1)}%`;
+                    resultsDiv.appendChild(summaryDiv);
+                  }
+                };
+              });
+            } else {
+              // Proses 1 foto
+              const img = document.getElementById("previewImg");
+              resultsDiv.appendChild(drawToCanvas(img, null, "1. Gambar Asli"));
+              resultsDiv.appendChild(
+                drawToCanvas(img, grayscale, "2. Grayscale")
+              );
+              resultsDiv.appendChild(
+                drawToCanvas(img, gaussianBlur, "3. Gaussian Blur")
+              );
+              resultsDiv.appendChild(
+                drawToCanvas(img, addNoise, "4. Gaussian Noise")
+              );
+              resultsDiv.appendChild(
+                drawToCanvas(
+                  img,
+                  function (imgData) {
+                    grayscale(imgData);
+                    sobelEdge(imgData);
+                  },
+                  "5. Sobel Edge"
+                )
+              );
+              let skinDiv = drawToCanvas(
+                img,
+                segmentSkin,
+                "6. Segmentasi Kulit (Threshold RGB)"
+              );
+              resultsDiv.appendChild(skinDiv);
+              let skinCanvas = skinDiv.querySelector("canvas");
+              let ctx = skinCanvas.getContext("2d");
+              let skinData = ctx.getImageData(
+                0,
+                0,
+                skinCanvas.width,
+                skinCanvas.height
+              );
+              let toneResult = classifySkinTone(skinData);
+              let shadeDiv = document.createElement("div");
+              shadeDiv.className = "shade-info mt-3";
+              shadeDiv.innerHTML = `<b>Warna Kulit Terdeteksi:</b> ${toneResult.tone}<br><b>Shade Make Up Rekomendasi:</b> ${toneResult.shade}<br><b>Info Bedak:</b> ${toneResult.info}<br><a href="${toneResult.link}" target="_blank">Lihat Bedak Rekomendasi di Google</a>`;
+              resultsDiv.appendChild(shadeDiv);
+            }
+          });
+
+        // Minta permission kamera di awal agar label kamera muncul
+        async function requestCameraPermission() {
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+              video: true,
+              audio: false,
+            });
+            stream.getTracks().forEach((track) => track.stop());
+          } catch (e) {
+            // User menolak permission
+          }
+        }
+        // Jalankan saat halaman load
+        window.addEventListener("DOMContentLoaded", async () => {
+          await requestCameraPermission();
+          updateCameraList();
+        });
+      });
+    </script>
+  </body>
+</html>
