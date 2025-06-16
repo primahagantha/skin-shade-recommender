@@ -338,27 +338,14 @@
           let previewDiv = document.getElementById("imagePreview");
           previewDiv.innerHTML = "";
           if (!detections.length) {
-            // Center crop jika tidak ada wajah
-            let cropSize = 256;
-            let x = Math.max(0, Math.floor((img.width - cropSize) / 2));
-            let y = Math.max(0, Math.floor((img.height - cropSize) / 2));
+            // Jika tidak ada wajah, tampilkan gambar asli saja (tanpa crop/zoom)
             let canvas = document.createElement("canvas");
-            canvas.width = cropSize;
-            canvas.height = cropSize;
+            canvas.width = img.width || img.naturalWidth || 256;
+            canvas.height = img.height || img.naturalHeight || 256;
             let ctx = canvas.getContext("2d");
-            ctx.drawImage(
-              img,
-              x,
-              y,
-              cropSize,
-              cropSize,
-              0,
-              0,
-              cropSize,
-              cropSize
-            );
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
             previewDiv.appendChild(canvas);
-            // Lanjutkan proses PCD untuk center crop ini
+            // Lanjutkan proses PCD untuk gambar asli ini jika perlu
             return;
           }
           detections.forEach((det, idx) => {
