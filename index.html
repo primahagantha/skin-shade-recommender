@@ -192,7 +192,7 @@
         // Load face-api.js models
         async function loadFaceModel() {
           if (faceDetModelLoaded) return;
-          await faceapi.nets.tinyFaceDetector.loadFromUri('./weights');
+          await faceapi.nets.tinyFaceDetector.loadFromUri("./weights");
           faceDetModelLoaded = true;
         }
         loadFaceModel();
@@ -314,15 +314,46 @@
             if (!file) return;
             const reader = new FileReader();
             reader.onload = function (ev) {
-              imgDataUrl = ev.target.result;
-              document.getElementById(
-                "imagePreview"
-              ).innerHTML = `<img src="${imgDataUrl}" id="previewImg" class="result-img" style="max-width:300px;">`;
-              document.getElementById("processBtn").disabled = false;
-              capturedImages = [imgDataUrl];
+              let img = new window.Image();
+              img.src = ev.target.result;
+              img.onload = function () {
+                processUploadedImage(img);
+                document.getElementById("processBtn").disabled = false;
+              };
             };
             reader.readAsDataURL(file);
           });
+
+        // Fungsi untuk proses upload dan deteksi banyak wajah
+        async function processUploadedImage(img) {
+          // Tunggu model siap
+          if (!window.faceapi) {
+            alert("face-api.js belum siap!");
+            return;
+          }
+          const detections = await faceapi.detectAllFaces(
+            img,
+            new faceapi.TinyFaceDetectorOptions()
+          );
+          if (!detections.length) {
+            alert("Tidak ada wajah terdeteksi!");
+            return;
+          }
+          let previewDiv = document.getElementById("imagePreview");
+          previewDiv.innerHTML = "";
+          detections.forEach((det, idx) => {
+            const { x, y, width, height } = det.box;
+            if (width > 50 && height > 50) {
+              let canvas = document.createElement("canvas");
+              canvas.width = 256;
+              canvas.height = 256;
+              let ctx = canvas.getContext("2d");
+              ctx.drawImage(img, x, y, width, height, 0, 0, 256, 256);
+              previewDiv.appendChild(canvas);
+              // Lanjutkan proses PCD untuk setiap wajah di sini jika perlu
+            }
+          });
+        }
 
         function drawToCanvas(img, processFn, caption) {
           let canvas = document.createElement("canvas");

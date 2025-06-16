@@ -5,6 +5,7 @@ Aplikasi web dan desktop untuk klasifikasi warna kulit dan rekomendasi shade mak
 ---
 
 ## Fitur Utama
+
 - **Klasifikasi warna kulit** (White, Brown/Tan/Medium, Black) dan rekomendasi shade make up.
 - **Pengolahan citra manual**: grayscale, gaussian blur, noise, edge detection, segmentasi kulit.
 - **Deteksi wajah otomatis** (face-api.js, crop area wajah untuk hasil maksimal).
@@ -48,6 +49,7 @@ Aplikasi web dan desktop untuk klasifikasi warna kulit dan rekomendasi shade mak
 ---
 
 ## Catatan
+
 - Semua proses utama dikerjakan manual di JavaScript/HTML5 Canvas, tanpa library image processing eksternal.
 - Model deteksi wajah (weights) harus ada di folder `weights`.
 - Untuk penggunaan offline, pastikan semua file JS dan model sudah ada di lokal.
@@ -55,11 +57,13 @@ Aplikasi web dan desktop untuk klasifikasi warna kulit dan rekomendasi shade mak
 ---
 
 ## Lisensi
+
 Open source untuk keperluan edukasi dan tugas akhir.
 
 ---
 
 ## Author
+
 - Prima Hagantha & Team
 - Face detection: [face-api.js](https://github.com/justadudewhohacks/face-api.js)
 
@@ -72,6 +76,7 @@ Aplikasi Python berbasis Streamlit untuk klasifikasi warna kulit dan rekomendasi
 ---
 
 ## Fitur Utama
+
 - **Klasifikasi warna kulit** (White, Brown/Tan/Medium, Black) dan rekomendasi shade make up.
 - **Pengolahan citra manual**: grayscale, konvolusi, gaussian blur, noise, edge detection (Sobel), transformasi Fourier, segmentasi kulit, deblurring (Lucy-Richardson).
 - **Input gambar**: upload file atau ambil dari kamera (PC, webcam, IP camera).
@@ -112,6 +117,7 @@ Aplikasi Python berbasis Streamlit untuk klasifikasi warna kulit dan rekomendasi
 ---
 
 ## Catatan
+
 - Semua proses utama dikerjakan manual di Python (tanpa fungsi siap pakai OpenCV untuk proses utama).
 - Penjelasan dan visualisasi setiap metode tersedia di aplikasi.
 - Untuk Windows, deteksi kamera menggunakan modul `wmi`.
@@ -119,10 +125,12 @@ Aplikasi Python berbasis Streamlit untuk klasifikasi warna kulit dan rekomendasi
 ---
 
 ## Lisensi
+
 Open source untuk keperluan edukasi dan tugas akhir.
 
 ---
 
 ## Author
+
 - Adaptasi dan pengembangan oleh Prima
 - Face detection: OpenCV haarcascade
