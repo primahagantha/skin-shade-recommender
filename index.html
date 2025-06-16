@@ -335,12 +335,32 @@
             img,
             new faceapi.TinyFaceDetectorOptions()
           );
-          if (!detections.length) {
-            alert("Tidak ada wajah terdeteksi!");
-            return;
-          }
           let previewDiv = document.getElementById("imagePreview");
           previewDiv.innerHTML = "";
+          if (!detections.length) {
+            // Center crop jika tidak ada wajah
+            let cropSize = 256;
+            let x = Math.max(0, Math.floor((img.width - cropSize) / 2));
+            let y = Math.max(0, Math.floor((img.height - cropSize) / 2));
+            let canvas = document.createElement("canvas");
+            canvas.width = cropSize;
+            canvas.height = cropSize;
+            let ctx = canvas.getContext("2d");
+            ctx.drawImage(
+              img,
+              x,
+              y,
+              cropSize,
+              cropSize,
+              0,
+              0,
+              cropSize,
+              cropSize
+            );
+            previewDiv.appendChild(canvas);
+            // Lanjutkan proses PCD untuk center crop ini
+            return;
+          }
           detections.forEach((det, idx) => {
             const { x, y, width, height } = det.box;
             if (width > 50 && height > 50) {
@@ -356,11 +376,29 @@
         }
 
         function drawToCanvas(img, processFn, caption) {
+          // Pastikan img adalah elemen gambar atau canvas
           let canvas = document.createElement("canvas");
           let ctx = canvas.getContext("2d");
-          canvas.width = img.width;
-          canvas.height = img.height;
-          ctx.drawImage(img, 0, 0);
+          let width = 256,
+            height = 256;
+          if (img instanceof HTMLImageElement) {
+            width = img.naturalWidth || img.width || 256;
+            height = img.naturalHeight || img.height || 256;
+            canvas.width = width;
+            canvas.height = height;
+            ctx.drawImage(img, 0, 0, width, height);
+          } else if (img instanceof HTMLCanvasElement) {
+            width = img.width || 256;
+            height = img.height || 256;
+            canvas.width = width;
+            canvas.height = height;
+            ctx.drawImage(img, 0, 0);
+          } else {
+            // Jika bukan img/canvas, skip dan return kosong
+            let div = document.createElement("div");
+            div.innerHTML = "<small>Gambar tidak valid</small>";
+            return div;
+          }
           if (processFn) {
             let imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             processFn(imgData);
@@ -526,120 +564,73 @@
           .addEventListener("click", function () {
             let resultsDiv = document.getElementById("results");
             resultsDiv.innerHTML = "";
-            if (capturedImages.length > 1) {
-              // Proses 5 foto
-              let summary = { White: 0, Brown: 0, Black: 0 };
-              capturedImages.forEach((url, idx) => {
-                let img = new window.Image();
-                img.src = url;
-                img.onload = function () {
-                  let div = document.createElement("div");
-                  div.innerHTML = `<b>Foto ke-${idx + 1}</b>`;
-                  resultsDiv.appendChild(div);
-                  resultsDiv.appendChild(
-                    drawToCanvas(img, null, "1. Gambar Asli")
-                  );
-                  resultsDiv.appendChild(
-                    drawToCanvas(img, grayscale, "2. Grayscale")
-                  );
-                  resultsDiv.appendChild(
-                    drawToCanvas(img, gaussianBlur, "3. Gaussian Blur")
-                  );
-                  resultsDiv.appendChild(
-                    drawToCanvas(img, addNoise, "4. Gaussian Noise")
-                  );
-                  resultsDiv.appendChild(
-                    drawToCanvas(
-                      img,
-                      function (imgData) {
-                        grayscale(imgData);
-                        sobelEdge(imgData);
-                      },
-                      "5. Sobel Edge"
-                    )
-                  );
-                  let skinDiv = drawToCanvas(
-                    img,
-                    segmentSkin,
-                    "6. Segmentasi Kulit (Threshold RGB)"
-                  );
-                  resultsDiv.appendChild(skinDiv);
-                  let skinCanvas = skinDiv.querySelector("canvas");
-                  let ctx = skinCanvas.getContext("2d");
-                  let skinData = ctx.getImageData(
-                    0,
-                    0,
-                    skinCanvas.width,
-                    skinCanvas.height
-                  );
-                  let toneResult = classifySkinTone(skinData);
-                  summary[toneResult.tone.split("/")[0]]++;
-                  let shadeDiv = document.createElement("div");
-                  shadeDiv.className = "shade-info mt-3";
-                  shadeDiv.innerHTML = `<b>Warna Kulit Terdeteksi:</b> ${toneResult.tone}<br><b>Shade Make Up Rekomendasi:</b> ${toneResult.shade}<br><b>Info Bedak:</b> ${toneResult.info}<br><a href="${toneResult.link}" target="_blank">Lihat Bedak Rekomendasi di Google</a>`;
-                  resultsDiv.appendChild(shadeDiv);
-                  if (idx === capturedImages.length - 1) {
-                    // Summary
-                    let total = summary.White + summary.Brown + summary.Black;
-                    let summaryDiv = document.createElement("div");
-                    summaryDiv.className = "shade-info mt-3";
-                    summaryDiv.innerHTML = `<b>Summary 5 Foto:</b><br>White: ${(
-                      (summary.White / total) *
-                      100
-                    ).toFixed(1)}%<br>Brown/Tan/Medium: ${(
-                      (summary.Brown / total) *
-                      100
-                    ).toFixed(1)}%<br>Black: ${(
-                      (summary.Black / total) *
-                      100
-                    ).toFixed(1)}%`;
-                    resultsDiv.appendChild(summaryDiv);
-                  }
-                };
-              });
-            } else {
-              // Proses 1 foto
-              const img = document.getElementById("previewImg");
-              resultsDiv.appendChild(drawToCanvas(img, null, "1. Gambar Asli"));
+            // Ambil semua canvas hasil crop wajah dari imagePreview
+            let previewDiv = document.getElementById("imagePreview");
+            let faceCanvases = Array.from(
+              previewDiv.querySelectorAll("canvas")
+            );
+            if (faceCanvases.length === 0) {
+              resultsDiv.innerHTML =
+                '<div class="alert alert-warning">Tidak ada wajah yang bisa diproses.</div>';
+              return;
+            }
+            faceCanvases.forEach((faceCanvas, idx) => {
               resultsDiv.appendChild(
-                drawToCanvas(img, grayscale, "2. Grayscale")
-              );
-              resultsDiv.appendChild(
-                drawToCanvas(img, gaussianBlur, "3. Gaussian Blur")
-              );
-              resultsDiv.appendChild(
-                drawToCanvas(img, addNoise, "4. Gaussian Noise")
+                drawToCanvas(faceCanvas, null, `Wajah ke-${idx + 1}: Asli`)
               );
               resultsDiv.appendChild(
                 drawToCanvas(
-                  img,
+                  faceCanvas,
+                  grayscale,
+                  `Wajah ke-${idx + 1}: Grayscale`
+                )
+              );
+              resultsDiv.appendChild(
+                drawToCanvas(
+                  faceCanvas,
+                  gaussianBlur,
+                  `Wajah ke-${idx + 1}: Gaussian Blur`
+                )
+              );
+              resultsDiv.appendChild(
+                drawToCanvas(
+                  faceCanvas,
+                  addNoise,
+                  `Wajah ke-${idx + 1}: Gaussian Noise`
+                )
+              );
+              resultsDiv.appendChild(
+                drawToCanvas(
+                  faceCanvas,
                   function (imgData) {
                     grayscale(imgData);
                     sobelEdge(imgData);
                   },
-                  "5. Sobel Edge"
+                  `Wajah ke-${idx + 1}: Sobel Edge`
                 )
               );
               let skinDiv = drawToCanvas(
-                img,
+                faceCanvas,
                 segmentSkin,
-                "6. Segmentasi Kulit (Threshold RGB)"
+                `Wajah ke-${idx + 1}: Segmentasi Kulit`
               );
               resultsDiv.appendChild(skinDiv);
               let skinCanvas = skinDiv.querySelector("canvas");
-              let ctx = skinCanvas.getContext("2d");
-              let skinData = ctx.getImageData(
-                0,
-                0,
-                skinCanvas.width,
-                skinCanvas.height
-              );
-              let toneResult = classifySkinTone(skinData);
-              let shadeDiv = document.createElement("div");
-              shadeDiv.className = "shade-info mt-3";
-              shadeDiv.innerHTML = `<b>Warna Kulit Terdeteksi:</b> ${toneResult.tone}<br><b>Shade Make Up Rekomendasi:</b> ${toneResult.shade}<br><b>Info Bedak:</b> ${toneResult.info}<br><a href="${toneResult.link}" target="_blank">Lihat Bedak Rekomendasi di Google</a>`;
-              resultsDiv.appendChild(shadeDiv);
-            }
+              if (skinCanvas) {
+                let ctx = skinCanvas.getContext("2d");
+                let skinData = ctx.getImageData(
+                  0,
+                  0,
+                  skinCanvas.width,
+                  skinCanvas.height
+                );
+                let toneResult = classifySkinTone(skinData);
+                let shadeDiv = document.createElement("div");
+                shadeDiv.className = "shade-info mt-3";
+                shadeDiv.innerHTML = `<b>Warna Kulit Terdeteksi:</b> ${toneResult.tone}<br><b>Shade Make Up Rekomendasi:</b> ${toneResult.shade}<br><b>Info Bedak:</b> ${toneResult.info}<br><a href="${toneResult.link}" target="_blank">Lihat Bedak Rekomendasi di Google</a>`;
+                resultsDiv.appendChild(shadeDiv);
+              }
+            });
           });
 
         // Minta permission kamera di awal agar label kamera muncul
