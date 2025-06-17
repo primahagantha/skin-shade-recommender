@@ -45,6 +45,13 @@
         margin-bottom: 1rem;
         background: #fff;
       }
+      #dropZone {
+        min-height: 60px;
+        cursor: pointer;
+      }
+      #stopCameraBtn {
+        display: none;
+      }
       .shade-info {
         background: #ffde03;
         border-left: 6px solid #222;
@@ -70,6 +77,32 @@
         position: relative;
         display: inline-block;
       }
+      #videoPreview {
+        display: none;
+      }
+      #faceCanvas {
+        display: none;
+      }
+      // Responsif gambar agar tidak keluar container
+      #imagePreview img,
+      #imagePreview canvas,
+      .result-img {
+        max-width: 100% !important;
+        height: auto !important;
+        display: inline-block;
+        box-sizing: border-box;
+      }
+      @media (max-width: 600px) {
+        .neo-brutal,
+        .container {
+          padding: 0.5rem !important;
+        }
+        #imagePreview img,
+        #imagePreview canvas,
+        .result-img {
+          max-width: 98vw !important;
+        }
+      }
     </style>
   </head>
   <body>
@@ -89,14 +122,23 @@
             type="file"
             id="imageInput"
             accept="image/*"
+            multiple
           />
           <div class="form-text">Atau gunakan kamera di bawah ini.</div>
+          <div class="mt-2">
+            <input type="text" id="imageUrlInput" class="form-control mb-2" placeholder="Paste link gambar .png/.cmd di sini" />
+            <button class="neo-btn" id="addImageUrlBtn">Upload dari Link</button>
+          </div>
+          <div id="dropZone" class="mt-2 p-3 border border-2 border-dark rounded bg-light text-center">Drag & Drop atau Ctrl+V gambar di sini</div>
         </div>
         <div class="mb-3">
           <label for="cameraSelect" class="form-label">Pilih Kamera:</label>
           <select class="form-select" id="cameraSelect"></select>
           <button class="neo-btn mt-2" id="startCameraBtn">
             Aktifkan Kamera
+          </button>
+          <button class="neo-btn mt-2" id="stopCameraBtn">
+            Non-aktifkan Kamera
           </button>
           <button class="neo-btn mt-2" id="captureBtn" disabled>
             Ambil 5 Foto (5 Detik)
@@ -217,11 +259,29 @@
             document.getElementById("cameraStatus").textContent =
               "Kamera aktif.";
             document.getElementById("faceCanvas").style.display = "block";
+            document.getElementById("stopCameraBtn").style.display = "inline-block";
+            document.getElementById("startCameraBtn").style.display = "none";
+            console.log("Kamera diaktifkan");
             detectFaceLoop();
           } catch (e) {
             document.getElementById("cameraStatus").textContent =
               "Gagal mengaktifkan kamera.";
+            console.log("Gagal mengaktifkan kamera", e);
           }
+        };
+
+        document.getElementById("stopCameraBtn").onclick = function () {
+          if (stream) {
+            stream.getTracks().forEach((track) => track.stop());
+            stream = null;
+          }
+          document.getElementById("videoPreview").style.display = "none";
+          document.getElementById("faceCanvas").style.display = "none";
+          document.getElementById("captureBtn").disabled = true;
+          document.getElementById("cameraStatus").textContent = "Kamera non-aktif.";
+          document.getElementById("stopCameraBtn").style.display = "none";
+          document.getElementById("startCameraBtn").style.display = "inline-block";
+          console.log("Kamera dinonaktifkan");
         };
 
         async function detectFaceLoop() {
@@ -241,6 +301,8 @@
             if (video.readyState === 4) {
               canvas.width = video.videoWidth;
               canvas.height = video.videoHeight;
+              canvas.style.width = video.style.width = video.offsetWidth + 'px';
+              canvas.style.height = video.style.height = video.offsetHeight + 'px';
               const detections = await faceapi.detectSingleFace(
                 video,
                 new faceapi.TinyFaceDetectorOptions()
@@ -262,56 +324,78 @@
           capturedImages = [];
           let countdown = document.getElementById("countdown");
           countdown.textContent = "";
+          window.faceCanvases = [];
+          let previewDiv = document.getElementById("imagePreview");
+          previewDiv.innerHTML = "";
           for (let i = 5; i >= 1; i--) {
             countdown.textContent = `Ambil foto dalam ${i} detik...`;
             await new Promise((r) => setTimeout(r, 1000));
-            // Ambil foto
             const video = document.getElementById("videoPreview");
             let canvas = document.createElement("canvas");
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             let ctx = canvas.getContext("2d");
             ctx.drawImage(video, 0, 0);
-            // Jika deteksi wajah, crop ke area wajah
-            let box = faceBoxes[0];
-            if (box) {
-              let margin = 0.2; // 20% margin
-              let x = Math.max(0, box.x - box.width * margin);
-              let y = Math.max(0, box.y - box.height * margin);
-              let w = Math.min(canvas.width - x, box.width * (1 + 2 * margin));
-              let h = Math.min(
-                canvas.height - y,
-                box.height * (1 + 2 * margin)
-              );
-              let faceCanvas = document.createElement("canvas");
-              faceCanvas.width = 256;
-              faceCanvas.height = 256;
-              faceCanvas
-                .getContext("2d")
-                .drawImage(canvas, x, y, w, h, 0, 0, 256, 256);
-              capturedImages.push(faceCanvas.toDataURL("image/png"));
+            // Proses face-api pada hasil capture
+            if (faceDetModelLoaded) {
+              const detections = await faceapi.detectAllFaces(canvas, new faceapi.TinyFaceDetectorOptions());
+              if (detections.length) {
+                detections.forEach((det, idx) => {
+                  const { x, y, width, height } = det.box;
+                  let faceCanvas = document.createElement("canvas");
+                  faceCanvas.width = 256;
+                  faceCanvas.height = 256;
+                  faceCanvas.getContext("2d").drawImage(canvas, x, y, width, height, 0, 0, 256, 256);
+                  previewDiv.appendChild(faceCanvas);
+                  window.faceCanvases.push(faceCanvas);
+                  console.log(`Wajah ke-${idx + 1} dari kamera diproses`);
+                });
+              } else {
+                // Jika tidak ada wajah, simpan full frame
+                let fullCanvas = document.createElement("canvas");
+                fullCanvas.width = canvas.width;
+                fullCanvas.height = canvas.height;
+                fullCanvas.getContext("2d").drawImage(canvas, 0, 0);
+                previewDiv.appendChild(fullCanvas);
+                window.faceCanvases.push(fullCanvas);
+                console.log("Tidak ada wajah terdeteksi pada kamera, proses gambar penuh");
+              }
             } else {
-              // Jika tidak ada wajah, simpan full frame
-              capturedImages.push(canvas.toDataURL("image/png"));
+              // fallback jika model belum siap
+              previewDiv.appendChild(canvas);
+              window.faceCanvases.push(canvas);
             }
           }
           countdown.textContent = "Foto selesai!";
-          // Preview 5 foto
-          let previewDiv = document.getElementById("imagePreview");
-          previewDiv.innerHTML = capturedImages
-            .map(
-              (url, i) =>
-                `<img src="${url}" class="result-img me-2 mb-2" style="max-width:120px;">`
-            )
-            .join("");
           document.getElementById("processBtn").disabled = false;
+          console.log("Semua foto dari kamera siap diproses");
         };
 
-        document
-          .getElementById("imageInput")
-          .addEventListener("change", function (e) {
-            const file = e.target.files[0];
-            if (!file) return;
+        document.getElementById("imageInput").addEventListener("change", function (e) {
+          const files = e.target.files;
+          if (!files.length) return;
+          const reader = new FileReader();
+          reader.onload = function (ev) {
+            let img = new window.Image();
+            img.src = ev.target.result;
+            img.onload = function () {
+              processUploadedImage(img);
+              document.getElementById("processBtn").disabled = false;
+            };
+          };
+          Array.from(files).forEach((file) => {
+            reader.readAsDataURL(file);
+          });
+        });
+
+        // Fungsi upload file multiple, drag & drop, paste, dan link
+        function handleFiles(files) {
+          if (!files || !files.length) return;
+          console.log("Files uploaded:", files);
+          let previewDiv = document.getElementById("imagePreview");
+          previewDiv.innerHTML = "";
+          Array.from(files).forEach((file, idx) => {
+            if (!file.type.startsWith("image/")) return;
             const reader = new FileReader();
             reader.onload = function (ev) {
               let img = new window.Image();
@@ -319,14 +403,111 @@
               img.onload = function () {
                 processUploadedImage(img);
                 document.getElementById("processBtn").disabled = false;
+                console.log(`Gambar ke-${idx + 1} siap diproses`);
               };
             };
             reader.readAsDataURL(file);
           });
+        }
+        document.getElementById("imageInput").addEventListener("change", function (e) {
+          handleFiles(e.target.files);
+        });
+        // Drag & drop
+        const dropZone = document.getElementById("dropZone");
+        dropZone.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          dropZone.classList.add("bg-warning");
+        });
+        dropZone.addEventListener("dragleave", (e) => {
+          e.preventDefault();
+          dropZone.classList.remove("bg-warning");
+        });
+        dropZone.addEventListener("drop", (e) => {
+          e.preventDefault();
+          dropZone.classList.remove("bg-warning");
+          handleFiles(e.dataTransfer.files);
+        });
+        // Paste
+        dropZone.addEventListener("paste", (e) => {
+          let items = e.clipboardData.items;
+          let files = [];
+          for (let i = 0; i < items.length; i++) {
+            if (items[i].type.indexOf("image") !== -1) {
+              files.push(items[i].getAsFile());
+            }
+          }
+          handleFiles(files);
+        });
+        // Paste global (Ctrl+V di mana saja)
+        window.addEventListener("paste", (e) => {
+          let items = e.clipboardData.items;
+          let files = [];
+          for (let i = 0; i < items.length; i++) {
+            if (items[i].type.indexOf("image") !== -1) {
+              files.push(items[i].getAsFile());
+            }
+          }
+          if (files.length) {
+            handleFiles(files);
+            dropZone.classList.add("bg-success");
+            setTimeout(() => dropZone.classList.remove("bg-success"), 1000);
+          }
+        });
+        // Upload dari link
+        document.getElementById("addImageUrlBtn").onclick = function () {
+          const url = document.getElementById("imageUrlInput").value.trim();
+          if (!url.match(/\.(png|cmd)$/i)) {
+            alert("Hanya link .png atau .cmd yang didukung!");
+            return;
+          }
+          let img = new window.Image();
+          img.crossOrigin = "anonymous";
+          img.src = url;
+          img.onload = function () {
+            processUploadedImage(img);
+            document.getElementById("processBtn").disabled = false;
+            console.log("Gambar dari link siap diproses");
+          };
+          img.onerror = function () {
+            alert("Gagal memuat gambar dari link!");
+          };
+        };
 
-        // Fungsi untuk proses upload dan deteksi banyak wajah
+        // Drag & Drop
+        (function () {
+          const dropZone = document.getElementById("dropZone");
+          dropZone.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            dropZone.classList.add("bg-warning", "text-dark");
+          });
+          dropZone.addEventListener("dragleave", (e) => {
+            e.preventDefault();
+            dropZone.classList.remove("bg-warning", "text-dark");
+          });
+          dropZone.addEventListener("drop", (e) => {
+            e.preventDefault();
+            dropZone.classList.remove("bg-warning", "text-dark");
+            const files = e.dataTransfer.files;
+            if (files.length) {
+              const reader = new FileReader();
+              reader.onload = function (ev) {
+                let img = new window.Image();
+                img.src = ev.target.result;
+                img.onload = function () {
+                  processUploadedImage(img);
+                  document.getElementById("processBtn").disabled = false;
+                };
+              };
+              Array.from(files).forEach((file) => {
+                reader.readAsDataURL(file);
+              });
+            }
+          });
+        })();
+
+        // Array global untuk menyimpan hasil crop wajah/canvas
+        window.faceCanvases = [];
         async function processUploadedImage(img) {
-          // Tunggu model siap
           if (!window.faceapi) {
             alert("face-api.js belum siap!");
             return;
@@ -337,17 +518,19 @@
           );
           let previewDiv = document.getElementById("imagePreview");
           previewDiv.innerHTML = "";
+          window.faceCanvases = [];
           if (!detections.length) {
-            // Jika tidak ada wajah, tampilkan gambar asli saja (tanpa crop/zoom)
             let canvas = document.createElement("canvas");
             canvas.width = img.width || img.naturalWidth || 256;
             canvas.height = img.height || img.naturalHeight || 256;
             let ctx = canvas.getContext("2d");
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
             previewDiv.appendChild(canvas);
-            // Lanjutkan proses PCD untuk gambar asli ini jika perlu
+            window.faceCanvases.push(canvas);
+            console.log("Tidak ada wajah terdeteksi, proses gambar penuh");
             return;
           }
+          console.log(`${detections.length} wajah terdeteksi pada gambar`);
           detections.forEach((det, idx) => {
             const { x, y, width, height } = det.box;
             if (width > 50 && height > 50) {
@@ -357,7 +540,8 @@
               let ctx = canvas.getContext("2d");
               ctx.drawImage(img, x, y, width, height, 0, 0, 256, 256);
               previewDiv.appendChild(canvas);
-              // Lanjutkan proses PCD untuk setiap wajah di sini jika perlu
+              window.faceCanvases.push(canvas);
+              console.log(`Wajah ke-${idx + 1} diproses`);
             }
           });
         }
@@ -551,92 +735,177 @@
           .addEventListener("click", function () {
             let resultsDiv = document.getElementById("results");
             resultsDiv.innerHTML = "";
-            // Ambil semua canvas hasil crop wajah dari imagePreview
-            let previewDiv = document.getElementById("imagePreview");
-            let faceCanvases = Array.from(
-              previewDiv.querySelectorAll("canvas")
-            );
+            let faceCanvases = window.faceCanvases || [];
             if (faceCanvases.length === 0) {
               resultsDiv.innerHTML =
                 '<div class="alert alert-warning">Tidak ada wajah yang bisa diproses.</div>';
               return;
             }
+            let summary = {
+              total: faceCanvases.length,
+              tones: {},
+              rgb: [],
+              dft: []
+            };
+            let toneCount = {};
+            let toneInfo = [];
+            let dftList = [];
             faceCanvases.forEach((faceCanvas, idx) => {
-              resultsDiv.appendChild(
-                drawToCanvas(faceCanvas, null, `Wajah ke-${idx + 1}: Asli`)
-              );
-              resultsDiv.appendChild(
-                drawToCanvas(
-                  faceCanvas,
-                  grayscale,
-                  `Wajah ke-${idx + 1}: Grayscale`
-                )
-              );
-              resultsDiv.appendChild(
-                drawToCanvas(
-                  faceCanvas,
-                  gaussianBlur,
-                  `Wajah ke-${idx + 1}: Gaussian Blur`
-                )
-              );
-              resultsDiv.appendChild(
-                drawToCanvas(
-                  faceCanvas,
-                  addNoise,
-                  `Wajah ke-${idx + 1}: Gaussian Noise`
-                )
-              );
-              resultsDiv.appendChild(
-                drawToCanvas(
-                  faceCanvas,
-                  function (imgData) {
-                    grayscale(imgData);
-                    sobelEdge(imgData);
-                  },
-                  `Wajah ke-${idx + 1}: Sobel Edge`
-                )
-              );
-              let skinDiv = drawToCanvas(
-                faceCanvas,
-                segmentSkin,
-                `Wajah ke-${idx + 1}: Segmentasi Kulit`
-              );
+              // Deblurring Lucy-Richardson (preview pertama)
+              let deblurCanvas = document.createElement('canvas');
+              deblurCanvas.width = faceCanvas.width;
+              deblurCanvas.height = faceCanvas.height;
+              let deblurCtx = deblurCanvas.getContext('2d');
+              deblurCtx.drawImage(faceCanvas, 0, 0);
+              let deblurImgData = deblurCtx.getImageData(0, 0, deblurCanvas.width, deblurCanvas.height);
+              lucyRichardsonDeblur(deblurImgData, 5);
+              deblurCtx.putImageData(deblurImgData, 0, 0);
+              resultsDiv.appendChild(drawToCanvas(deblurCanvas, null, `Wajah ke-${idx + 1}: Deblurring Lucy-Richardson`));
+              // DFT statistik setelah deblurring
+              let dftMag = dftMagnitude(deblurImgData);
+              summary.dft.push(dftMag);
+              // dftList.push(`DFT Magnitude rata-rata wajah ke-${idx + 1}: ${dftMag.toFixed(2)}`);
+              // Proses lain setelah deblurring
+              resultsDiv.appendChild(drawToCanvas(deblurCanvas, grayscale, `Wajah ke-${idx + 1}: Grayscale`));
+              resultsDiv.appendChild(drawToCanvas(deblurCanvas, gaussianBlur, `Wajah ke-${idx + 1}: Gaussian Blur`));
+              resultsDiv.appendChild(drawToCanvas(deblurCanvas, addNoise, `Wajah ke-${idx + 1}: Gaussian Noise`));
+              resultsDiv.appendChild(drawToCanvas(deblurCanvas, function (imgData) { grayscale(imgData); sobelEdge(imgData); }, `Wajah ke-${idx + 1}: Sobel Edge`));
+              let skinDiv = drawToCanvas(deblurCanvas, segmentSkin, `Wajah ke-${idx + 1}: Segmentasi Kulit`);
               resultsDiv.appendChild(skinDiv);
               let skinCanvas = skinDiv.querySelector("canvas");
               if (skinCanvas) {
                 let ctx = skinCanvas.getContext("2d");
-                let skinData = ctx.getImageData(
-                  0,
-                  0,
-                  skinCanvas.width,
-                  skinCanvas.height
-                );
+                let skinData = ctx.getImageData(0, 0, skinCanvas.width, skinCanvas.height);
                 let toneResult = classifySkinTone(skinData);
+                toneCount[toneResult.tone] = (toneCount[toneResult.tone] || 0) + 1;
+                summary.rgb.push(averageRGB(skinData));
+                toneInfo.push(toneResult);
+                // Hasil bedak/shade per wajah
                 let shadeDiv = document.createElement("div");
                 shadeDiv.className = "shade-info mt-3";
                 shadeDiv.innerHTML = `<b>Warna Kulit Terdeteksi:</b> ${toneResult.tone}<br><b>Shade Make Up Rekomendasi:</b> ${toneResult.shade}<br><b>Info Bedak:</b> ${toneResult.info}<br><a href="${toneResult.link}" target="_blank">Lihat Bedak Rekomendasi di Google</a>`;
                 resultsDiv.appendChild(shadeDiv);
               }
             });
-          });
-
-        // Minta permission kamera di awal agar label kamera muncul
-        async function requestCameraPermission() {
-          try {
-            const stream = await navigator.mediaDevices.getUserMedia({
-              video: true,
-              audio: false,
+            // Summary
+            let summaryDiv = document.createElement("div");
+            summaryDiv.className = "shade-info mt-3";
+            let summaryHTML = `<b>Summary:</b><br>Jumlah wajah terdeteksi: ${summary.total}<br>`;
+            Object.keys(toneCount).forEach(tone => {
+              let percent = ((toneCount[tone] / summary.total) * 100).toFixed(1);
+              summaryHTML += `- ${tone}: ${toneCount[tone]} wajah (${percent}%)<br>`;
             });
-            stream.getTracks().forEach((track) => track.stop());
-          } catch (e) {
-            // User menolak permission
+            // Rata-rata RGB
+            if (summary.rgb.length) {
+              let avgR = 0, avgG = 0, avgB = 0;
+              summary.rgb.forEach(rgb => { avgR += rgb.r; avgG += rgb.g; avgB += rgb.b; });
+              avgR = Math.round(avgR / summary.rgb.length);
+              avgG = Math.round(avgG / summary.rgb.length);
+              avgB = Math.round(avgB / summary.rgb.length);
+              summaryHTML += `Rata-rata RGB kulit: (${avgR}, ${avgG}, ${avgB})<br>`;
+            }
+            // DFT summary
+            if (summary.dft.length) {
+              let avgDFT = summary.dft.reduce((a, b) => a + b, 0) / summary.dft.length;
+              // summaryHTML += `Rata-rata DFT Magnitude: ${avgDFT.toFixed(2)}<br>`;
+              dftList.forEach(line => summaryHTML += `<small>${line}</small><br>`);
+            }
+            // Rekomendasi shade utama (mayoritas)
+            let mainTone = Object.keys(toneCount).reduce((a, b) => toneCount[a] > toneCount[b] ? a : b);
+            let mainInfo = toneInfo.find(t => t.tone === mainTone);
+            if (mainInfo) {
+              summaryHTML += `<b>Rekomendasi Shade Utama:</b> ${mainInfo.shade}<br><b>Info:</b> ${mainInfo.info}<br><a href="${mainInfo.link}" target="_blank">Lihat Bedak Rekomendasi di Google</a>`;
+            }
+            summaryDiv.innerHTML = summaryHTML;
+            resultsDiv.prepend(summaryDiv);
+          });
+        // Fungsi rata-rata RGB
+        function averageRGB(imgData) {
+          let sumR = 0, sumG = 0, sumB = 0, total = 0;
+          for (let i = 0; i < imgData.data.length; i += 4) {
+            let r = imgData.data[i], g = imgData.data[i + 1], b = imgData.data[i + 2];
+            if (!(r === 128 && g === 128 && b === 128)) {
+              sumR += r; sumG += g; sumB += b; total++;
+            }
+          }
+          if (total === 0) return { r: 0, g: 0, b: 0 };
+          return { r: Math.round(sumR / total), g: Math.round(sumG / total), b: Math.round(sumB / total) };
+        }
+
+        // Lucy-Richardson deblurring (manual, iterasi sederhana)
+        function lucyRichardsonDeblur(imgData, iterations = 5) {
+          // Kernel blur sederhana (Gaussian 3x3)
+          const kernel = [
+            1 / 16, 2 / 16, 1 / 16,
+            2 / 16, 4 / 16, 2 / 16,
+            1 / 16, 2 / 16, 1 / 16
+          ];
+          const w = imgData.width, h = imgData.height;
+          let estimate = new Float32Array(imgData.data.length);
+          for (let i = 0; i < imgData.data.length; i++) estimate[i] = imgData.data[i];
+          let observed = new Float32Array(imgData.data.length);
+          for (let i = 0; i < imgData.data.length; i++) observed[i] = imgData.data[i];
+          function convolve(src) {
+            let dst = new Float32Array(src.length);
+            for (let y = 1; y < h - 1; y++) {
+              for (let x = 1; x < w - 1; x++) {
+                for (let c = 0; c < 3; c++) {
+                  let sum = 0, idx = 0;
+                  for (let ky = -1; ky <= 1; ky++) {
+                    for (let kx = -1; kx <= 1; kx++) {
+                      let px = 4 * ((y + ky) * w + (x + kx)) + c;
+                      sum += src[px] * kernel[idx++];
+                    }
+                  }
+                  dst[4 * (y * w + x) + c] = sum;
+                }
+                dst[4 * (y * w + x) + 3] = src[4 * (y * w + x) + 3];
+              }
+            }
+            return dst;
+          }
+          for (let iter = 0; iter < iterations; iter++) {
+            let estimateBlur = convolve(estimate);
+            let ratio = new Float32Array(estimate.length);
+            for (let i = 0; i < estimate.length; i++) {
+              ratio[i] = estimateBlur[i] ? observed[i] / (estimateBlur[i] + 1e-6) : 0;
+            }
+            let ratioBlur = convolve(ratio);
+            for (let i = 0; i < estimate.length; i++) {
+              estimate[i] = Math.max(0, Math.min(255, estimate[i] * ratioBlur[i]));
+            }
+          }
+          for (let i = 0; i < imgData.data.length; i++) {
+            imgData.data[i] = estimate[i];
           }
         }
-        // Jalankan saat halaman load
-        window.addEventListener("DOMContentLoaded", async () => {
-          await requestCameraPermission();
-          updateCameraList();
-        });
+        // DFT transformasi manual (hanya magnitude, untuk statistik)
+        function dftMagnitude(imgData) {
+          const w = imgData.width, h = imgData.height;
+          let gray = [];
+          for (let y = 0; y < h; y++) {
+            for (let x = 0; x < w; x++) {
+              let idx = 4 * (y * w + x);
+              let r = imgData.data[idx], g = imgData.data[idx + 1], b = imgData.data[idx + 2];
+              gray.push(0.299 * r + 0.587 * g + 0.114 * b);
+            }
+          }
+          // DFT 1D untuk baris pertama (contoh, bukan seluruh gambar)
+          let N = w;
+          let mag = [];
+          for (let k = 0; k < N; k++) {
+            let re = 0, im = 0;
+            for (let n = 0; n < N; n++) {
+              let angle = (-2 * Math.PI * k * n) / N;
+              re += gray[n] * Math.cos(angle);
+              im += gray[n] * Math.sin(angle);
+            }
+            mag.push(Math.sqrt(re * re + im * im));
+          }
+          // Statistik: rata-rata magnitude
+          let avgMag = mag.reduce((a, b) => a + b, 0) / mag.length;
+          return avgMag;
+        }
       });
     </script>
   </body>
