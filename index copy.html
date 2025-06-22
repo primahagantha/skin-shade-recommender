@@ -126,22 +126,10 @@
           />
           <div class="form-text">Atau gunakan kamera di bawah ini.</div>
           <div class="mt-2">
-            <input
-              type="text"
-              id="imageUrlInput"
-              class="form-control mb-2"
-              placeholder="Paste link gambar .png/.cmd di sini"
-            />
-            <button class="neo-btn" id="addImageUrlBtn">
-              Upload dari Link
-            </button>
+            <input type="text" id="imageUrlInput" class="form-control mb-2" placeholder="Paste link gambar .png/.cmd di sini" />
+            <button class="neo-btn" id="addImageUrlBtn">Upload dari Link</button>
           </div>
-          <div
-            id="dropZone"
-            class="mt-2 p-3 border border-2 border-dark rounded bg-light text-center"
-          >
-            Drag & Drop atau Ctrl+V gambar di sini
-          </div>
+          <div id="dropZone" class="mt-2 p-3 border border-2 border-dark rounded bg-light text-center">Drag & Drop atau Ctrl+V gambar di sini</div>
         </div>
         <div class="mb-3">
           <label for="cameraSelect" class="form-label">Pilih Kamera:</label>
@@ -271,8 +259,7 @@
             document.getElementById("cameraStatus").textContent =
               "Kamera aktif.";
             document.getElementById("faceCanvas").style.display = "block";
-            document.getElementById("stopCameraBtn").style.display =
-              "inline-block";
+            document.getElementById("stopCameraBtn").style.display = "inline-block";
             document.getElementById("startCameraBtn").style.display = "none";
             console.log("Kamera diaktifkan");
             detectFaceLoop();
@@ -291,11 +278,9 @@
           document.getElementById("videoPreview").style.display = "none";
           document.getElementById("faceCanvas").style.display = "none";
           document.getElementById("captureBtn").disabled = true;
-          document.getElementById("cameraStatus").textContent =
-            "Kamera non-aktif.";
+          document.getElementById("cameraStatus").textContent = "Kamera non-aktif.";
           document.getElementById("stopCameraBtn").style.display = "none";
-          document.getElementById("startCameraBtn").style.display =
-            "inline-block";
+          document.getElementById("startCameraBtn").style.display = "inline-block";
           console.log("Kamera dinonaktifkan");
         };
 
@@ -316,9 +301,8 @@
             if (video.readyState === 4) {
               canvas.width = video.videoWidth;
               canvas.height = video.videoHeight;
-              canvas.style.width = video.style.width = video.offsetWidth + "px";
-              canvas.style.height = video.style.height =
-                video.offsetHeight + "px";
+              canvas.style.width = video.style.width = video.offsetWidth + 'px';
+              canvas.style.height = video.style.height = video.offsetHeight + 'px';
               const detections = await faceapi.detectSingleFace(
                 video,
                 new faceapi.TinyFaceDetectorOptions()
@@ -354,19 +338,14 @@
             ctx.drawImage(video, 0, 0);
             // Proses face-api pada hasil capture
             if (faceDetModelLoaded) {
-              const detections = await faceapi.detectAllFaces(
-                canvas,
-                new faceapi.TinyFaceDetectorOptions()
-              );
+              const detections = await faceapi.detectAllFaces(canvas, new faceapi.TinyFaceDetectorOptions());
               if (detections.length) {
                 detections.forEach((det, idx) => {
                   const { x, y, width, height } = det.box;
                   let faceCanvas = document.createElement("canvas");
                   faceCanvas.width = 256;
                   faceCanvas.height = 256;
-                  faceCanvas
-                    .getContext("2d")
-                    .drawImage(canvas, x, y, width, height, 0, 0, 256, 256);
+                  faceCanvas.getContext("2d").drawImage(canvas, x, y, width, height, 0, 0, 256, 256);
                   previewDiv.appendChild(faceCanvas);
                   window.faceCanvases.push(faceCanvas);
                   console.log(`Wajah ke-${idx + 1} dari kamera diproses`);
@@ -379,9 +358,7 @@
                 fullCanvas.getContext("2d").drawImage(canvas, 0, 0);
                 previewDiv.appendChild(fullCanvas);
                 window.faceCanvases.push(fullCanvas);
-                console.log(
-                  "Tidak ada wajah terdeteksi pada kamera, proses gambar penuh"
-                );
+                console.log("Tidak ada wajah terdeteksi pada kamera, proses gambar penuh");
               }
             } else {
               // fallback jika model belum siap
@@ -394,24 +371,22 @@
           console.log("Semua foto dari kamera siap diproses");
         };
 
-        document
-          .getElementById("imageInput")
-          .addEventListener("change", function (e) {
-            const files = e.target.files;
-            if (!files.length) return;
-            const reader = new FileReader();
-            reader.onload = function (ev) {
-              let img = new window.Image();
-              img.src = ev.target.result;
-              img.onload = function () {
-                processUploadedImage(img);
-                document.getElementById("processBtn").disabled = false;
-              };
+        document.getElementById("imageInput").addEventListener("change", function (e) {
+          const files = e.target.files;
+          if (!files.length) return;
+          const reader = new FileReader();
+          reader.onload = function (ev) {
+            let img = new window.Image();
+            img.src = ev.target.result;
+            img.onload = function () {
+              processUploadedImage(img);
+              document.getElementById("processBtn").disabled = false;
             };
-            Array.from(files).forEach((file) => {
-              reader.readAsDataURL(file);
-            });
+          };
+          Array.from(files).forEach((file) => {
+            reader.readAsDataURL(file);
           });
+        });
 
         // Fungsi upload file multiple, drag & drop, paste, dan link
         function handleFiles(files) {
@@ -434,11 +409,9 @@
             reader.readAsDataURL(file);
           });
         }
-        document
-          .getElementById("imageInput")
-          .addEventListener("change", function (e) {
-            handleFiles(e.target.files);
-          });
+        document.getElementById("imageInput").addEventListener("change", function (e) {
+          handleFiles(e.target.files);
+        });
         // Drag & drop
         const dropZone = document.getElementById("dropZone");
         dropZone.addEventListener("dragover", (e) => {
@@ -547,7 +520,6 @@
           previewDiv.innerHTML = "";
           window.faceCanvases = [];
           if (!detections.length) {
-            // Tidak ada wajah: proses gambar full size, jangan resize/crop
             let canvas = document.createElement("canvas");
             canvas.width = img.width || img.naturalWidth || 256;
             canvas.height = img.height || img.naturalHeight || 256;
@@ -558,6 +530,7 @@
             console.log("Tidak ada wajah terdeteksi, proses gambar penuh");
             return;
           }
+          console.log(`${detections.length} wajah terdeteksi pada gambar`);
           detections.forEach((det, idx) => {
             const { x, y, width, height } = det.box;
             if (width > 50 && height > 50) {
@@ -733,11 +706,7 @@
               link: "#",
             };
           let mean = (sumR + sumG + sumB) / (3 * total);
-          console.log(
-            `Total Rata-Rata RGB: ${mean.toFixed(
-              2
-            )} (${sumR}, ${sumG}, ${sumB}) dari ${total} piksel`
-          );
+          console.log(`Total Rata-Rata RGB: ${mean.toFixed(2)} (${sumR}, ${sumG}, ${sumB}) dari ${total} piksel`);
           console.log(`Totatl Mean: ${mean}  dari ${total} piksel`);
 
           if (mean > 180) {
@@ -764,229 +733,6 @@
           }
         }
 
-        // --- PREPROCESSING FUNCTIONS ---
-        function resizeToStandard(imgData, size = 256) {
-          // Resize image to standard size (256x256)
-          let canvas = document.createElement("canvas");
-          canvas.width = size;
-          canvas.height = size;
-          let ctx = canvas.getContext("2d");
-          let tmp = document.createElement("canvas");
-          tmp.width = imgData.width;
-          tmp.height = imgData.height;
-          tmp.getContext("2d").putImageData(imgData, 0, 0);
-          ctx.drawImage(tmp, 0, 0, size, size);
-          return ctx.getImageData(0, 0, size, size);
-        }
-
-        function gammaCorrection(imgData, gamma = 2.2) {
-          let invGamma = 1 / gamma;
-          for (let i = 0; i < imgData.data.length; i += 4) {
-            imgData.data[i] = 255 * Math.pow(imgData.data[i] / 255, invGamma);
-            imgData.data[i + 1] =
-              255 * Math.pow(imgData.data[i + 1] / 255, invGamma);
-            imgData.data[i + 2] =
-              255 * Math.pow(imgData.data[i + 2] / 255, invGamma);
-          }
-        }
-
-        function gaussianBlur(imgData) {
-          // Gaussian blur kernel 3x3
-          let w = imgData.width,
-            h = imgData.height;
-          let src = new Uint8ClampedArray(imgData.data);
-          let kernel = [1, 2, 1, 2, 4, 2, 1, 2, 1];
-          let ksum = 16;
-          for (let y = 1; y < h - 1; y++) {
-            for (let x = 1; x < w - 1; x++) {
-              for (let c = 0; c < 3; c++) {
-                let sum = 0,
-                  idx = 0;
-                for (let dy = -1; dy <= 1; dy++)
-                  for (let dx = -1; dx <= 1; dx++)
-                    sum +=
-                      src[4 * ((y + dy) * w + (x + dx)) + c] * kernel[idx++];
-                imgData.data[4 * (y * w + x) + c] = sum / ksum;
-              }
-            }
-          }
-        }
-
-        // --- WIENER FILTER (deblurring) ---
-        function wienerFilter(imgData, kernelSize = 3, K = 0.01) {
-          // Simple Wiener filter for grayscale image
-          let w = imgData.width,
-            h = imgData.height;
-          let src = new Float32Array(imgData.data.length);
-          for (let i = 0; i < imgData.data.length; i++)
-            src[i] = imgData.data[i];
-          // Gaussian kernel
-          let kernel = [1, 2, 1, 2, 4, 2, 1, 2, 1];
-          let ksum = 16;
-          function convolve(src) {
-            let dst = new Float32Array(src.length);
-            for (let y = 1; y < h - 1; y++) {
-              for (let x = 1; x < w - 1; x++) {
-                for (let c = 0; c < 3; c++) {
-                  let sum = 0,
-                    idx = 0;
-                  for (let dy = -1; dy <= 1; dy++)
-                    for (let dx = -1; dx <= 1; dx++)
-                      sum +=
-                        src[4 * ((y + dy) * w + (x + dx)) + c] * kernel[idx++];
-                  dst[4 * (y * w + x) + c] = sum / ksum;
-                }
-                dst[4 * (y * w + x) + 3] = src[4 * (y * w + x) + 3];
-              }
-            }
-            return dst;
-          }
-          let blurred = convolve(src);
-          for (let i = 0; i < src.length; i++) {
-            let powerBlur = blurred[i] * blurred[i];
-            imgData.data[i] = Math.max(
-              0,
-              Math.min(255, (src[i] * powerBlur) / (powerBlur + K))
-            );
-          }
-        }
-
-        // --- COLOR SPACE CONVERSIONS ---
-        function rgb2hsv(r, g, b) {
-          r /= 255;
-          g /= 255;
-          b /= 255;
-          let max = Math.max(r, g, b),
-            min = Math.min(r, g, b);
-          let h,
-            s,
-            v = max;
-          let d = max - min;
-          s = max === 0 ? 0 : d / max;
-          if (max === min) h = 0;
-          else {
-            switch (max) {
-              case r:
-                h = (g - b) / d + (g < b ? 6 : 0);
-                break;
-              case g:
-                h = (b - r) / d + 2;
-                break;
-              case b:
-                h = (r - g) / d + 4;
-                break;
-            }
-            h /= 6;
-          }
-          return [h * 360, s * 100, v * 100];
-        }
-        function rgb2lab(r, g, b) {
-          // sRGB to CIE Lab
-          function pivotX(x) {
-            return x > 0.008856 ? Math.pow(x, 1 / 3) : 7.787 * x + 16 / 116;
-          }
-          r /= 255;
-          g /= 255;
-          b /= 255;
-          // sRGB to XYZ
-          r = r > 0.04045 ? Math.pow((r + 0.055) / 1.055, 2.4) : r / 12.92;
-          g = g > 0.04045 ? Math.pow((g + 0.055) / 1.055, 2.4) : g / 12.92;
-          b = b > 0.04045 ? Math.pow((b + 0.055) / 1.055, 2.4) : b / 12.92;
-          let x = (r * 0.4124 + g * 0.3576 + b * 0.1805) / 0.95047;
-          let y = (r * 0.2126 + g * 0.7152 + b * 0.0722) / 1.0;
-          let z = (r * 0.0193 + g * 0.1192 + b * 0.9505) / 1.08883;
-          x = pivotX(x);
-          y = pivotX(y);
-          z = pivotX(z);
-          let L = 116 * y - 16;
-          let a = 500 * (x - y);
-          let b_ = 200 * (y - z);
-          return [L, a, b_];
-        }
-        function rgb2ycbcr(r, g, b) {
-          let y = 0.299 * r + 0.587 * g + 0.114 * b;
-          let cb = 128 - 0.168736 * r - 0.331264 * g + 0.5 * b;
-          let cr = 128 + 0.5 * r - 0.418688 * g - 0.081312 * b;
-          return [y, cb, cr];
-        }
-
-        // --- K-MEANS CLUSTERING FOR SKIN SEGMENTATION ---
-        function kmeansSegment(imgData, k = 2, maxIter = 10) {
-          // Use HSV for clustering
-          let pixels = [];
-          for (let i = 0; i < imgData.data.length; i += 4) {
-            let r = imgData.data[i],
-              g = imgData.data[i + 1],
-              b = imgData.data[i + 2];
-            let hsv = rgb2hsv(r, g, b);
-            pixels.push(hsv);
-          }
-          // Initialize centroids randomly
-          let centroids = [];
-          for (let i = 0; i < k; i++)
-            centroids.push(pixels[Math.floor(Math.random() * pixels.length)]);
-          let labels = new Array(pixels.length);
-          for (let iter = 0; iter < maxIter; iter++) {
-            // Assign
-            for (let i = 0; i < pixels.length; i++) {
-              let minDist = Infinity,
-                minIdx = 0;
-              for (let j = 0; j < k; j++) {
-                let d = Math.sqrt(
-                  Math.pow(pixels[i][0] - centroids[j][0], 2) +
-                    Math.pow(pixels[i][1] - centroids[j][1], 2) +
-                    Math.pow(pixels[i][2] - centroids[j][2], 2)
-                );
-                if (d < minDist) {
-                  minDist = d;
-                  minIdx = j;
-                }
-              }
-              labels[i] = minIdx;
-            }
-            // Update
-            let sums = Array.from({ length: k }, () => [0, 0, 0]);
-            let counts = Array.from({ length: k }, () => 0);
-            for (let i = 0; i < pixels.length; i++) {
-              let l = labels[i];
-              sums[l][0] += pixels[i][0];
-              sums[l][1] += pixels[i][1];
-              sums[l][2] += pixels[i][2];
-              counts[l]++;
-            }
-            for (let j = 0; j < k; j++) {
-              if (counts[j] > 0) {
-                centroids[j][0] = sums[j][0] / counts[j];
-                centroids[j][1] = sums[j][1] / counts[j];
-                centroids[j][2] = sums[j][2] / counts[j];
-              }
-            }
-          }
-          // Find cluster with highest average skin-likeliness (use HSV: H in [0,50], S>20, V>20)
-          let skinIdx = 0,
-            maxScore = -1;
-          for (let j = 0; j < k; j++) {
-            let h = centroids[j][0],
-              s = centroids[j][1],
-              v = centroids[j][2];
-            let score = h >= 0 && h <= 50 && s > 20 && v > 20 ? 1 : 0;
-            if (score > maxScore) {
-              maxScore = score;
-              skinIdx = j;
-            }
-          }
-          // Mask non-skin cluster
-          for (let i = 0; i < pixels.length; i++) {
-            if (labels[i] !== skinIdx) {
-              imgData.data[i * 4] =
-                imgData.data[i * 4 + 1] =
-                imgData.data[i * 4 + 2] =
-                  128;
-            }
-          }
-        }
-
-        // --- MAIN PROCESSING PIPELINE ---
         document
           .getElementById("processBtn")
           .addEventListener("click", function () {
@@ -1002,153 +748,60 @@
               total: faceCanvases.length,
               tones: {},
               rgb: [],
-              dft: [],
+              dft: []
             };
             let toneCount = {};
             let toneInfo = [];
+           // let dftList = [];
             faceCanvases.forEach((faceCanvas, idx) => {
-              let ctx = faceCanvas.getContext("2d");
-              let imgData = ctx.getImageData(
-                0,
-                0,
-                faceCanvas.width,
-                faceCanvas.height
-              );
-              // Jika gambar bukan hasil crop wajah (ukuran bukan 256x256), pipeline tetap jalan tanpa resize
-              // 1. Wiener deblurring
-              wienerFilter(imgData);
-              let wienerCanvas = document.createElement("canvas");
-              wienerCanvas.width = faceCanvas.width;
-              wienerCanvas.height = faceCanvas.height;
-              wienerCanvas.getContext("2d").putImageData(imgData, 0, 0);
-              resultsDiv.appendChild(
-                drawToCanvas(
-                  wienerCanvas,
-                  null,
-                  `Wajah ke-${idx + 1}: Wiener Deblurring`
-                )
-              );
-              // 2. Add Gaussian noise
-              addNoise(imgData);
-              let noiseCanvas = document.createElement("canvas");
-              noiseCanvas.width = faceCanvas.width;
-              noiseCanvas.height = faceCanvas.height;
-              noiseCanvas.getContext("2d").putImageData(imgData, 0, 0);
-              resultsDiv.appendChild(
-                drawToCanvas(
-                  noiseCanvas,
-                  null,
-                  `Wajah ke-${idx + 1}: Gaussian Noise`
-                )
-              );
-              // 3. Gaussian blur
-              gaussianBlur(imgData);
-              let blurCanvas = document.createElement("canvas");
-              blurCanvas.width = faceCanvas.width;
-              blurCanvas.height = faceCanvas.height;
-              blurCanvas.getContext("2d").putImageData(imgData, 0, 0);
-              resultsDiv.appendChild(
-                drawToCanvas(
-                  blurCanvas,
-                  null,
-                  `Wajah ke-${idx + 1}: Gaussian Blur`
-                )
-              );
-              // 4. DFT (for statistics/preview)
-              let dftMag = dftMagnitude(imgData);
+              // Deblurring Lucy-Richardson (preview pertama)
+              let deblurCanvas = document.createElement('canvas');
+              deblurCanvas.width = faceCanvas.width;
+              deblurCanvas.height = faceCanvas.height;
+              let deblurCtx = deblurCanvas.getContext('2d');
+              deblurCtx.drawImage(faceCanvas, 0, 0);
+              let deblurImgData = deblurCtx.getImageData(0, 0, deblurCanvas.width, deblurCanvas.height);
+              lucyRichardsonDeblur(deblurImgData, 5);
+              deblurCtx.putImageData(deblurImgData, 0, 0);
+              resultsDiv.appendChild(drawToCanvas(deblurCanvas, null, `Wajah ke-${idx + 1}: Deblurring Lucy-Richardson`));
+              // DFT statistik setelah deblurring
+              let dftMag = dftMagnitude(deblurImgData);
               summary.dft.push(dftMag);
-              let dftDiv = document.createElement("div");
-              dftDiv.innerHTML = `<small>DFT Magnitude rata-rata: ${dftMag.toFixed(
-                2
-              )}</small>`;
-              resultsDiv.appendChild(dftDiv);
-              // 5. Sobel edge enhancement
-              let edgeCanvas = document.createElement("canvas");
-              edgeCanvas.width = faceCanvas.width;
-              edgeCanvas.height = faceCanvas.height;
-              let edgeImgData = new ImageData(
-                new Uint8ClampedArray(imgData.data),
-                imgData.width,
-                imgData.height
-              );
-              grayscale(edgeImgData);
-              sobelEdge(edgeImgData);
-              edgeCanvas.getContext("2d").putImageData(edgeImgData, 0, 0);
-              resultsDiv.appendChild(
-                drawToCanvas(
-                  edgeCanvas,
-                  null,
-                  `Wajah ke-${idx + 1}: Sobel Edge`
-                )
-              );
-              // 6. Rule-based skin segmentation
-              let segCanvas = document.createElement("canvas");
-              segCanvas.width = faceCanvas.width;
-              segCanvas.height = faceCanvas.height;
-              let segImgData = new ImageData(
-                new Uint8ClampedArray(imgData.data),
-                imgData.width,
-                imgData.height
-              );
-              segmentSkin(segImgData);
-              segCanvas.getContext("2d").putImageData(segImgData, 0, 0);
-              resultsDiv.appendChild(
-                drawToCanvas(
-                  segCanvas,
-                  null,
-                  `Wajah ke-${idx + 1}: Segmentasi Kulit (Rule-based)`
-                )
-              );
-              // 7. K-means clustering on skin region only
-              let kmeansCanvas = document.createElement("canvas");
-              kmeansCanvas.width = faceCanvas.width;
-              kmeansCanvas.height = faceCanvas.height;
-              let kmeansImgData = new ImageData(
-                new Uint8ClampedArray(segImgData.data),
-                segImgData.width,
-                segImgData.height
-              );
-              kmeansSegment(kmeansImgData, 2, 10);
-              kmeansCanvas.getContext("2d").putImageData(kmeansImgData, 0, 0);
-              resultsDiv.appendChild(
-                drawToCanvas(
-                  kmeansCanvas,
-                  null,
-                  `Wajah ke-${idx + 1}: K-means Clustering (Kulit)`
-                )
-              );
-              // 8. Classification
-              let toneResult = classifySkinTone(kmeansImgData);
-              toneCount[toneResult.tone] =
-                (toneCount[toneResult.tone] || 0) + 1;
-              summary.rgb.push(averageRGB(kmeansImgData));
-              toneInfo.push(toneResult);
-              // Hasil bedak/shade per wajah
-              let shadeDiv = document.createElement("div");
-              shadeDiv.className = "shade-info mt-3";
-              shadeDiv.innerHTML = `<b>Warna Kulit Terdeteksi:</b> ${toneResult.tone}<br><b>Shade Make Up Rekomendasi:</b> ${toneResult.shade}<br><b>Info Bedak:</b> ${toneResult.info}<br><a href="${toneResult.link}" target="_blank">Lihat Bedak Rekomendasi di Google</a>`;
-              resultsDiv.appendChild(shadeDiv);
+              // dftList.push(`DFT Magnitude rata-rata wajah ke-${idx + 1}: ${dftMag.toFixed(2)}`);
+              // Proses lain setelah deblurring
+              resultsDiv.appendChild(drawToCanvas(deblurCanvas, grayscale, `Wajah ke-${idx + 1}: Grayscale`));
+              resultsDiv.appendChild(drawToCanvas(deblurCanvas, gaussianBlur, `Wajah ke-${idx + 1}: Gaussian Blur`));
+              resultsDiv.appendChild(drawToCanvas(deblurCanvas, addNoise, `Wajah ke-${idx + 1}: Gaussian Noise`));
+              resultsDiv.appendChild(drawToCanvas(deblurCanvas, function (imgData) { grayscale(imgData); sobelEdge(imgData); }, `Wajah ke-${idx + 1}: Sobel Edge`));
+              let skinDiv = drawToCanvas(deblurCanvas, segmentSkin, `Wajah ke-${idx + 1}: Segmentasi Kulit`);
+              resultsDiv.appendChild(skinDiv);
+              let skinCanvas = skinDiv.querySelector("canvas");
+              if (skinCanvas) {
+                let ctx = skinCanvas.getContext("2d");
+                let skinData = ctx.getImageData(0, 0, skinCanvas.width, skinCanvas.height);
+                let toneResult = classifySkinTone(skinData);
+                toneCount[toneResult.tone] = (toneCount[toneResult.tone] || 0) + 1;
+                summary.rgb.push(averageRGB(skinData));
+                toneInfo.push(toneResult);
+                // Hasil bedak/shade per wajah
+                let shadeDiv = document.createElement("div");
+                shadeDiv.className = "shade-info mt-3";
+                shadeDiv.innerHTML = `<b>Warna Kulit Terdeteksi:</b> ${toneResult.tone}<br><b>Shade Make Up Rekomendasi:</b> ${toneResult.shade}<br><b>Info Bedak:</b> ${toneResult.info}<br><a href="${toneResult.link}" target="_blank">Lihat Bedak Rekomendasi di Google</a>`;
+                resultsDiv.appendChild(shadeDiv);
+              }
             });
             // Summary
             let summaryDiv = document.createElement("div");
             summaryDiv.className = "shade-info mt-3";
             let summaryHTML = `<b>Summary:</b><br>Jumlah wajah terdeteksi: ${summary.total}<br>`;
-            Object.keys(toneCount).forEach((tone) => {
-              let percent = ((toneCount[tone] / summary.total) * 100).toFixed(
-                1
-              );
+            Object.keys(toneCount).forEach(tone => {
+              let percent = ((toneCount[tone] / summary.total) * 100).toFixed(1);
               summaryHTML += `- ${tone}: ${toneCount[tone]} wajah (${percent}%)<br>`;
             });
             // Rata-rata RGB
             if (summary.rgb.length) {
-              let avgR = 0,
-                avgG = 0,
-                avgB = 0;
-              summary.rgb.forEach((rgb) => {
-                avgR += rgb.r;
-                avgG += rgb.g;
-                avgB += rgb.b;
-              });
+              let avgR = 0, avgG = 0, avgB = 0;
+              summary.rgb.forEach(rgb => { avgR += rgb.r; avgG += rgb.g; avgB += rgb.b; });
               avgR = Math.round(avgR / summary.rgb.length);
               avgG = Math.round(avgG / summary.rgb.length);
               avgB = Math.round(avgB / summary.rgb.length);
@@ -1156,17 +809,13 @@
             }
             // DFT summary
             if (summary.dft.length) {
-              let avgDFT =
-                summary.dft.reduce((a, b) => a + b, 0) / summary.dft.length;
-              summaryHTML += `Rata-rata DFT Magnitude: ${avgDFT.toFixed(
-                2
-              )}<br>`;
+              let avgDFT = summary.dft.reduce((a, b) => a + b, 0) / summary.dft.length;
+              // summaryHTML += `Rata-rata DFT Magnitude: ${avgDFT.toFixed(2)}<br>`;
+              dftList.forEach(line => summaryHTML += `<small>${line}</small><br>`);
             }
             // Rekomendasi shade utama (mayoritas)
-            let mainTone = Object.keys(toneCount).reduce((a, b) =>
-              toneCount[a] > toneCount[b] ? a : b
-            );
-            let mainInfo = toneInfo.find((t) => t.tone === mainTone);
+            let mainTone = Object.keys(toneCount).reduce((a, b) => toneCount[a] > toneCount[b] ? a : b);
+            let mainInfo = toneInfo.find(t => t.tone === mainTone);
             if (mainInfo) {
               summaryHTML += `<b>Rekomendasi Shade Utama:</b> ${mainInfo.shade}<br><b>Info:</b> ${mainInfo.info}<br><a href="${mainInfo.link}" target="_blank">Lihat Bedak Rekomendasi di Google</a>`;
             }
@@ -1175,58 +824,36 @@
           });
         // Fungsi rata-rata RGB
         function averageRGB(imgData) {
-          let sumR = 0,
-            sumG = 0,
-            sumB = 0,
-            total = 0;
+          let sumR = 0, sumG = 0, sumB = 0, total = 0;
           for (let i = 0; i < imgData.data.length; i += 4) {
-            let r = imgData.data[i],
-              g = imgData.data[i + 1],
-              b = imgData.data[i + 2];
+            let r = imgData.data[i], g = imgData.data[i + 1], b = imgData.data[i + 2];
             if (!(r === 128 && g === 128 && b === 128)) {
-              sumR += r;
-              sumG += g;
-              sumB += b;
-              total++;
+              sumR += r; sumG += g; sumB += b; total++;
             }
           }
           if (total === 0) return { r: 0, g: 0, b: 0 };
-          return {
-            r: Math.round(sumR / total),
-            g: Math.round(sumG / total),
-            b: Math.round(sumB / total),
-          };
+          return { r: Math.round(sumR / total), g: Math.round(sumG / total), b: Math.round(sumB / total) };
         }
 
         // Lucy-Richardson deblurring (manual, iterasi sederhana)
         function lucyRichardsonDeblur(imgData, iterations = 5) {
           // Kernel blur sederhana (Gaussian 3x3)
           const kernel = [
-            1 / 16,
-            2 / 16,
-            1 / 16,
-            2 / 16,
-            4 / 16,
-            2 / 16,
-            1 / 16,
-            2 / 16,
-            1 / 16,
+            1 / 16, 2 / 16, 1 / 16,
+            2 / 16, 4 / 16, 2 / 16,
+            1 / 16, 2 / 16, 1 / 16
           ];
-          const w = imgData.width,
-            h = imgData.height;
+          const w = imgData.width, h = imgData.height;
           let estimate = new Float32Array(imgData.data.length);
-          for (let i = 0; i < imgData.data.length; i++)
-            estimate[i] = imgData.data[i];
+          for (let i = 0; i < imgData.data.length; i++) estimate[i] = imgData.data[i];
           let observed = new Float32Array(imgData.data.length);
-          for (let i = 0; i < imgData.data.length; i++)
-            observed[i] = imgData.data[i];
+          for (let i = 0; i < imgData.data.length; i++) observed[i] = imgData.data[i];
           function convolve(src) {
             let dst = new Float32Array(src.length);
             for (let y = 1; y < h - 1; y++) {
               for (let x = 1; x < w - 1; x++) {
                 for (let c = 0; c < 3; c++) {
-                  let sum = 0,
-                    idx = 0;
+                  let sum = 0, idx = 0;
                   for (let ky = -1; ky <= 1; ky++) {
                     for (let kx = -1; kx <= 1; kx++) {
                       let px = 4 * ((y + ky) * w + (x + kx)) + c;
@@ -1244,16 +871,11 @@
             let estimateBlur = convolve(estimate);
             let ratio = new Float32Array(estimate.length);
             for (let i = 0; i < estimate.length; i++) {
-              ratio[i] = estimateBlur[i]
-                ? observed[i] / (estimateBlur[i] + 1e-6)
-                : 0;
+              ratio[i] = estimateBlur[i] ? observed[i] / (estimateBlur[i] + 1e-6) : 0;
             }
             let ratioBlur = convolve(ratio);
             for (let i = 0; i < estimate.length; i++) {
-              estimate[i] = Math.max(
-                0,
-                Math.min(255, estimate[i] * ratioBlur[i])
-              );
+              estimate[i] = Math.max(0, Math.min(255, estimate[i] * ratioBlur[i]));
             }
           }
           for (let i = 0; i < imgData.data.length; i++) {
@@ -1262,15 +884,12 @@
         }
         // DFT transformasi manual (hanya magnitude, untuk statistik)
         function dftMagnitude(imgData) {
-          const w = imgData.width,
-            h = imgData.height;
+          const w = imgData.width, h = imgData.height;
           let gray = [];
           for (let y = 0; y < h; y++) {
             for (let x = 0; x < w; x++) {
               let idx = 4 * (y * w + x);
-              let r = imgData.data[idx],
-                g = imgData.data[idx + 1],
-                b = imgData.data[idx + 2];
+              let r = imgData.data[idx], g = imgData.data[idx + 1], b = imgData.data[idx + 2];
               gray.push(0.299 * r + 0.587 * g + 0.114 * b);
             }
           }
@@ -1278,8 +897,7 @@
           let N = w;
           let mag = [];
           for (let k = 0; k < N; k++) {
-            let re = 0,
-              im = 0;
+            let re = 0, im = 0;
             for (let n = 0; n < N; n++) {
               let angle = (-2 * Math.PI * k * n) / N;
               re += gray[n] * Math.cos(angle);
