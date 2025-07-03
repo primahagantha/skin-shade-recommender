@@ -1,0 +1,93 @@
+/* Hide upload/camera area by default, shown by JS */
+#uploadArea,
+#cameraArea {
+  display: none;
+}
+
+/* Show when active (JS will override display) */
+#uploadArea.active,
+#cameraArea.active {
+  display: block;
+}
+
+/* Remove inline style for faceCanvas, use class instead */
+#faceCanvas {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+/* Remove inline style for gallery card image container */
+.gallery-img-container {
+  position: relative;
+}
+/* Custom sidebar and gallery styles */
+.sidebar {
+  min-height: 100vh;
+  box-shadow: 2px 0 8px #eee;
+  background: #f8f9fa;
+}
+.sidebar-sticky {
+  position: sticky;
+  top: 0;
+}
+.sidebar h2 {
+  font-weight: bold;
+  letter-spacing: 1px;
+  font-size: 1.2em;
+}
+.sidebar .nav-link.active {
+  background: #ffde03;
+  color: #222;
+  font-weight: bold;
+  border-radius: 8px;
+}
+.sidebar .nav-link {
+  color: #333;
+  font-weight: 500;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+.sidebar .nav-link:hover {
+  background: #ffe066;
+  color: #222;
+}
+.gallery-img {
+  object-fit: cover;
+  width: 100%;
+  height: 180px;
+  max-width: 220px;
+  margin: auto;
+  display: block;
+  border-radius: 12px;
+  border: 2px solid #eee;
+}
+.gallery-edu-note {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.8);
+  font-size: 0.9em;
+  padding: 2px 4px;
+  text-align: center;
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+.card-body {
+  text-align: center;
+}
+.mt-3.text-muted {
+  font-size: 0.95em;
+}
+/* Button icon style */
+.neo-btn i {
+  margin-right: 6px;
+}
+/* Responsive sidebar */
+@media (max-width: 900px) {
+  .sidebar {
+    min-height: unset;
+    box-shadow: none;
+  }
+}

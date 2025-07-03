@@ -8,7 +8,6 @@
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="style-custom.css" />
     <script src="face-api.min.js"></script>
     <script src="face-api.min.js.map"></script>
     <style>
@@ -84,6 +83,7 @@
       #faceCanvas {
         display: none;
       }
+      // Responsif gambar agar tidak keluar container
       #imagePreview img,
       #imagePreview canvas,
       .result-img {
@@ -106,344 +106,97 @@
     </style>
   </head>
   <body>
-    <div class="container-fluid" style="min-height: 100vh">
-      <div class="row">
-        <!-- Sidebar -->
-        <nav class="col-md-3 col-lg-2 d-md-block sidebar py-4">
-          <div class="sidebar-sticky">
-            <h2 class="text-center mb-4">KLASIFIKASI WARNA KULIT</h2>
-            <ul class="nav flex-column mb-4">
-              <li class="nav-item mb-2">
-                <a class="nav-link active" href="#main-area"
-                  ><i class="bi bi-person-square"></i> Klasifikasi</a
-                >
-              </li>
-              <li class="nav-item mb-2">
-                <a class="nav-link" href="#gallery"
-                  ><i class="bi bi-palette"></i> Galeri Warna Kulit</a
-                >
-              </li>
-              <li class="nav-item mb-2">
-                <a class="nav-link" href="#about"
-                  ><i class="bi bi-info-circle"></i> Tentang</a
-                >
-              </li>
-              <li class="nav-item mb-2">
-                <a class="nav-link" href="#guide"
-                  ><i class="bi bi-question-circle"></i> Panduan</a
-                >
-              </li>
-            </ul>
-            <div class="text-center mt-5">
-              <!-- teks ini project di hosting di github pages, silahkan cek repository -->
-              <h5>Source code tersedia di github</h5>
-              <a href="https://github.com/primahagantha/skin-shade-recommender">
-                <img
-                  src="https://cdn-icons-png.flaticon.com/512/2111/2111425.png"
-                  width="50"
-                  height="50"
-                  alt="Github Repository"
-                  style="opacity: 0.7"
-                />
-              </a>
-              <div class="mt-2" style="font-size: 0.9em; color: #888">versi 1.2</div>
-            </div>
+    <div class="container py-4">
+      <div class="neo-brutal">
+        <h1 class="mb-3">Skin Tone Classifier & Makeup Shade Recommender</h1>
+        <p class="lead">
+          Aplikasi web untuk klasifikasi warna kulit dan rekomendasi shade make
+          up berbasis pengolahan citra digital manual.
+        </p>
+        <div class="mb-4">
+          <label for="imageInput" class="form-label"
+            >Upload Foto Wajah (JPG/PNG):</label
+          >
+          <input
+            class="form-control"
+            type="file"
+            id="imageInput"
+            accept="image/*"
+            multiple
+          />
+          <div class="form-text">Atau gunakan kamera di bawah ini.</div>
+          <div class="mt-2">
+            <input
+              type="text"
+              id="imageUrlInput"
+              class="form-control mb-2"
+              placeholder="Paste link gambar .png/.cmd di sini"
+            />
+            <button class="neo-btn" id="addImageUrlBtn">
+              Upload dari Link
+            </button>
           </div>
-        </nav>
-        <!-- Main Content -->
-        <main class="col-md-9 col-lg-10 ms-sm-auto px-4 py-4" id="main-area">
-          <!-- Mode Switcher (moved to bottom) -->
-          <!-- Skin Tone Gallery -->
-          <section id="about" class="neo-brutal mb-4">
-            <h3><span class="bi bi-info-circle"></span> Tentang Proyek</h3>
-            <p>
-              Banyak orang masih kesulitan memilih shade make-up yang cocok
-              dengan warna kulitnya. Aplikasi ini membantu pengguna menentukan
-              shade make-up yang sesuai secara otomatis dan real-time
-              menggunakan kamera atau upload gambar.<br /><br />
-              Sistem ini memanfaatkan teknik pengolahan citra digital seperti
-              Gaussian Blur, Fourier Transform, Sobel, Wiener Filter, penambahan
-              Gaussian Noise, dan segmentasi warna kulit dengan K-Means
-              Clustering. Semua proses dilakukan langsung di browser tanpa
-              library image processing khusus.<br /><br />
-              Dengan aplikasi ini, pengguna bisa mendapatkan rekomendasi shade
-              make-up yang lebih tepat dan hasil riasan yang natural.
-            </p>
-          </section>
-          <section id="gallery" class="mb-5">
-            <h3 class="mb-3">
-              <span class="bi bi-palette"></span> Galeri Warna Kulit &
-              Rekomendasi
-            </h3>
-            <div class="row row-cols-1 row-cols-md-3 g-4">
-              <div class="col">
-                <div class="card h-100 shadow-sm">
-                  <div class="gallery-img-container">
-                    <div class="gallery-img-container">
-                      <img
-                        src="img/white.png"
-                        class="card-img-top gallery-img"
-                        alt="Kulit Putih"
-                      />
-                      <div class="gallery-edu-note">
-                        Gambar untuk kebutuhan pendidikan
-                      </div>
-                    </div>
-                  </div>
-                  <div class="card-body">
-                    <h5 class="card-title">Ivory (Putih)</h5>
-                    <p class="card-text">
-                      Cocok untuk kulit putih cerah.<br />Rekomendasi shade:
-                      <b>Ivory</b>.
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div class="col">
-                <div class="card h-100 shadow-sm">
-                  <div class="gallery-img-container">
-                    <div class="gallery-img-container">
-                      <img
-                        src="img/medium.jpg"
-                        class="card-img-top gallery-img"
-                        alt="Kulit Sawo Matang"
-                      />
-                      <div class="gallery-edu-note">
-                        Gambar untuk kebutuhan pendidikan
-                      </div>
-                    </div>
-                  </div>
-                  <div class="card-body">
-                    <h5 class="card-title">Beige (Sawo Matang)</h5>
-                    <p class="card-text">
-                      Cocok untuk kulit sawo matang.<br />Rekomendasi shade:
-                      <b>Natural Beige</b>.
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div class="col">
-                <div class="card h-100 shadow-sm">
-                  <div class="gallery-img-container">
-                    <div class="gallery-img-container">
-                      <img
-                        src="img/tan.png"
-                        class="card-img-top gallery-img"
-                        alt="Kulit Gelap"
-                      />
-                      <div class="gallery-edu-note">
-                        Gambar untuk kebutuhan pendidikan
-                      </div>
-                    </div>
-                  </div>
-                  <div class="card-body">
-                    <h5 class="card-title">Tan (Gelap)</h5>
-                    <p class="card-text">
-                      Cocok untuk kulit gelap.<br />Rekomendasi shade:
-                      <b>Beige</b>.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="mt-3 text-muted">
-              <b>Catatan:</b> Penggunaan gambar pada galeri ini hanya untuk
-              kebutuhan pendidikan dan referensi visual. Hasil klasifikasi dapat
-              berbeda tergantung kondisi foto.<br />Seluruh gambar hanya
-              digunakan untuk kebutuhan pendidikan.
-            </div>
-          </section>
-          <!-- Upload Area -->
-          <section class="neo-brutal mb-4" id="modeSwitcher">
-            <h4 class="mb-3 text-center">Pilih Mode</h4>
-            <div class="d-flex justify-content-center gap-3 flex-wrap">
-              <button
-                id="btnModeUpload"
-                class="neo-btn btn btn-outline-primary btn-lg"
-                type="button"
-              >
-                <i class="bi bi-upload"></i> Upload Gambar
-              </button>
-              <button
-                id="btnModeCamera"
-                class="neo-btn btn btn-outline-success btn-lg"
-                type="button"
-              >
-                <i class="bi bi-camera-video"></i> Kamera Realtime
-              </button>
-            </div>
-          </section>
-          <section class="neo-brutal mb-4" id="uploadArea">
-            <h1 class="mb-3 text-center">
-              <span class="bi bi-upload"></span> Upload Gambar Wajah
-            </h1>
-            <p class="lead text-center">
-              Aplikasi web untuk klasifikasi warna kulit dan rekomendasi shade
-              make up berbasis pengolahan citra digital secara manual.
-            </p>
-            <div class="mb-4">
-              <label for="imageInput" class="form-label">
-                <i class="bi bi-image"></i> Upload Foto Wajah (JPG/PNG):
-              </label>
-              <input
-                class="form-control mb-2"
-                type="file"
-                id="imageInput"
-                accept="image/*"
-                multiple
-              />
-              <div class="input-group mb-2">
-                <input
-                  type="text"
-                  id="imageUrlInput"
-                  class="form-control"
-                  placeholder="Tempel link gambar .png/.cmd di sini"
-                />
-                <button class="neo-btn btn btn-warning" id="addImageUrlBtn">
-                  <i class="bi bi-link-45deg"></i> Upload dari Link
-                </button>
-              </div>
-              <div
-                id="dropZone"
-                class="mt-2 p-3 border border-2 border-dark rounded bg-light text-center"
-              >
-                <i class="bi bi-cloud-arrow-up"></i> Drag & Drop atau Ctrl+V
-                gambar di sini
-              </div>
-            </div>
-            <div id="previewBefore" class="mb-3"></div>
-            <div id="imagePreview" class="mb-4"></div>
-            <div id="previewAfter" class="mb-3"></div>
-            <button
-              class="neo-btn btn btn-danger mb-3"
-              id="processBtnUpload"
-              disabled
-            >
-              <i class="bi bi-magic"></i> Proses Gambar
-            </button>
-            <div id="resultsUpload"></div>
-          </section>
-          <!-- Camera Area -->
-          <section class="neo-brutal mb-4" id="cameraArea">
-            <h1 class="mb-3 text-center">
-              <span class="bi bi-camera-video"></span> Kamera Realtime
-            </h1>
-            <p class="lead text-center">
-              Untuk hasil maksimal, pastikan pencahayaan cukup dan wajah
-              terlihat jelas di kamera.
-            </p>
-            <div class="mb-3">
-              <label for="cameraSelect" class="form-label">
-                <i class="bi bi-camera"></i> Pilih Kamera:
-              </label>
-              <div class="input-group mb-2">
-                <select class="form-select" id="cameraSelect"></select>
-                <button class="neo-btn btn btn-success" id="startCameraBtn">
-                  <i class="bi bi-camera-video"></i> Aktifkan Kamera
-                </button>
-                <button class="neo-btn btn btn-secondary" id="stopCameraBtn">
-                  <i class="bi bi-x-circle"></i> Non-aktifkan Kamera
-                </button>
-              </div>
-              <button
-                class="neo-btn btn btn-primary mb-2"
-                id="captureBtn"
-                disabled
-              >
-                <i class="bi bi-camera"></i> Ambil 5 Foto (5 Detik)
-              </button>
-              <div class="form-text mb-2">
-                Kamera akan mengambil 5 foto secara otomatis dalam 5 detik.
-              </div>
-              <div class="form-text mb-2">
-                <i class="bi bi-lightbulb"></i> Tips: Pastikan wajah menghadap
-                kamera dan pencahayaan cukup terang.
-              </div>
-              <div id="cameraStatus" class="form-text"></div>
-              <div class="relative">
-                <video id="videoPreview" autoplay></video>
-                <canvas id="faceCanvas"></canvas>
-              </div>
-              <div class="countdown" id="countdown"></div>
-            </div>
-            <div id="imagePreview" class="mb-4"></div>
-            <button
-              class="neo-btn btn btn-danger mb-3"
-              id="processBtnCamera"
-              disabled
-            >
-              <i class="bi bi-magic"></i> Proses Gambar
-            </button>
-            <div id="resultsCamera"></div>
-          </section>
-          <!-- About & Guide -->
-
-          <section id="guide" class="neo-brutal mb-4">
-            <!-- Mode Switcher (moved to bottom) -->
-
-            <h3><i class="bi bi-question-circle"></i> Panduan Penggunaan</h3>
-            <ol>
-              <li>
-                <b>Upload foto wajah</b> melalui tombol
-                <i class="bi bi-upload"></i> atau gunakan kamera langsung.
-              </li>
-              <li>
-                <b>Jika menggunakan kamera</b>, pilih kamera yang tersedia lalu
-                klik <i class="bi bi-camera-video"></i> Aktifkan Kamera. Setelah
-                aktif, klik <i class="bi bi-camera"></i> Ambil 5 Foto.
-              </li>
-              <li>
-                <b>Setelah foto muncul di preview</b>, klik
-                <i class="bi bi-magic"></i> Proses Gambar untuk memulai
-                klasifikasi.
-              </li>
-              <li>
-                Setiap tahap pengolahan citra (blur, noise, segmentasi, dsb)
-                akan divisualisasikan di bawah.
-              </li>
-              <li>
-                Hasil klasifikasi warna kulit dan rekomendasi shade make up akan
-                muncul di bagian bawah.
-              </li>
-              <li>
-                <b>Catatan:</b> Pastikan pencahayaan cukup dan wajah terlihat
-                jelas untuk hasil terbaik.
-              </li>
-            </ol>
-          </section>
-        </main>
+          <div
+            id="dropZone"
+            class="mt-2 p-3 border border-2 border-dark rounded bg-light text-center"
+          >
+            Drag & Drop atau Ctrl+V gambar di sini
+          </div>
+        </div>
+        <div class="mb-3">
+          <label for="cameraSelect" class="form-label">Pilih Kamera:</label>
+          <select class="form-select" id="cameraSelect"></select>
+          <button class="neo-btn mt-2" id="startCameraBtn">
+            Aktifkan Kamera
+          </button>
+          <button class="neo-btn mt-2" id="stopCameraBtn">
+            Non-aktifkan Kamera
+          </button>
+          <button class="neo-btn mt-2" id="captureBtn" disabled>
+            Ambil 5 Foto (5 Detik)
+          </button>
+          <div id="cameraStatus" class="form-text"></div>
+          <div class="relative">
+            <video
+              id="videoPreview"
+              autoplay
+              playsinline
+              style="display: none"
+            ></video>
+            <canvas
+              id="faceCanvas"
+              style="position: absolute; left: 0; top: 0; display: none"
+            ></canvas>
+          </div>
+          <div class="countdown" id="countdown"></div>
+        </div>
+        <div id="imagePreview" class="mb-4"></div>
+        <button class="neo-btn mb-3" id="processBtn" disabled>
+          Proses Gambar
+        </button>
+        <div id="results"></div>
+      </div>
+      <div class="neo-brutal">
+        <h3>Deskripsi Proyek</h3>
+        <p>
+          Proyek ini mengimplementasikan pengolahan citra digital secara manual
+          di browser menggunakan JavaScript dan HTML5 Canvas. Semua algoritma
+          utama dikerjakan tanpa library image processing khusus, sehingga
+          seluruh proses dapat dipelajari secara mendalam.
+        </p>
+        <h3>Alur Kerja</h3>
+        <ol>
+          <li>Upload gambar wajah atau gunakan kamera.</li>
+          <li>
+            Gambar diproses: grayscale, gaussian blur, noise, edge, segmentasi,
+            klasifikasi warna kulit.
+          </li>
+          <li>Hasil tiap tahap divisualisasikan.</li>
+          <li>Rekomendasi shade make up diberikan.</li>
+        </ol>
       </div>
     </div>
     <script>
-      // Mode switching logic
-      let currentMode = "upload";
-      function showMode(mode) {
-        var upload = document.getElementById("uploadArea");
-        var camera = document.getElementById("cameraArea");
-        var btnUpload = document.getElementById("processBtnUpload");
-        var btnCamera = document.getElementById("processBtnCamera");
-        if (mode === "upload") {
-          upload.style.display = "block";
-          camera.style.display = "none";
-          btnUpload.disabled = false;
-          btnCamera.disabled = true;
-        } else {
-          camera.style.display = "block";
-          upload.style.display = "none";
-          btnCamera.disabled = false;
-          btnUpload.disabled = true;
-        }
-        currentMode = mode;
-      }
-      document.addEventListener("DOMContentLoaded", function () {
-        showMode("upload"); // default
-        document.getElementById("btnModeUpload").onclick = function () {
-          showMode("upload");
-        };
-        document.getElementById("btnModeCamera").onclick = function () {
-          showMode("camera");
-        };
-      });
       // Tunggu faceapi siap sebelum menjalankan kode utama
       function waitForFaceApiReady(cb) {
         if (window.faceapi) cb();
@@ -588,8 +341,7 @@
           let countdown = document.getElementById("countdown");
           countdown.textContent = "";
           window.faceCanvases = [];
-          // Make sure preview is in camera area, not upload area
-          let previewDiv = document.querySelector("#cameraArea #imagePreview");
+          let previewDiv = document.getElementById("imagePreview");
           previewDiv.innerHTML = "";
           for (let i = 5; i >= 1; i--) {
             countdown.textContent = `Ambil foto dalam ${i} detik...`;
@@ -787,35 +539,12 @@
             alert("face-api.js belum siap!");
             return;
           }
-          // Preview sebelum deteksi wajah (selalu 500x500 agar konsisten)
-          let previewBefore = document.getElementById("previewBefore");
-          previewBefore.innerHTML =
-            "<b>Preview Sebelum Deteksi Wajah (500x500):</b><br>";
-          let beforeCanvas = document.createElement("canvas");
-          beforeCanvas.width = 500;
-          beforeCanvas.height = 500;
-          let beforeCtx = beforeCanvas.getContext("2d");
-          // Gambar di-center dan scale to fit (tanpa crop, preserve aspect ratio)
-          let imgW = img.width || img.naturalWidth || 256;
-          let imgH = img.height || img.naturalHeight || 256;
-          let scale = Math.min(500 / imgW, 500 / imgH);
-          let drawW = imgW * scale;
-          let drawH = imgH * scale;
-          let dx = (500 - drawW) / 2;
-          let dy = (500 - drawH) / 2;
-          beforeCtx.fillStyle = "#fff";
-          beforeCtx.fillRect(0, 0, 500, 500);
-          beforeCtx.drawImage(img, 0, 0, imgW, imgH, dx, dy, drawW, drawH);
-          previewBefore.appendChild(beforeCanvas);
-
           const detections = await faceapi.detectAllFaces(
             img,
             new faceapi.TinyFaceDetectorOptions()
           );
           let previewDiv = document.getElementById("imagePreview");
-          let previewAfter = document.getElementById("previewAfter");
           previewDiv.innerHTML = "";
-          previewAfter.innerHTML = "";
           window.faceCanvases = [];
           if (!detections.length) {
             // Tidak ada wajah: proses gambar full size, jangan resize/crop
@@ -826,13 +555,9 @@
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
             previewDiv.appendChild(canvas);
             window.faceCanvases.push(canvas);
-            previewAfter.innerHTML =
-              '<div class="alert alert-warning mt-2">Wajah tidak terdeteksi. Gambar akan diproses penuh tanpa crop wajah.</div>';
             console.log("Tidak ada wajah terdeteksi, proses gambar penuh");
             return;
           }
-          // Jika ada wajah, tampilkan preview crop wajah
-          previewAfter.innerHTML = "<b>Preview Setelah Deteksi Wajah:</b><br>";
           detections.forEach((det, idx) => {
             const { x, y, width, height } = det.box;
             if (width > 50 && height > 50) {
@@ -843,13 +568,6 @@
               ctx.drawImage(img, x, y, width, height, 0, 0, 256, 256);
               previewDiv.appendChild(canvas);
               window.faceCanvases.push(canvas);
-              // Tampilkan juga di previewAfter
-              let cropLabel = document.createElement("div");
-              cropLabel.style.fontSize = "0.95em";
-              cropLabel.style.marginBottom = "4px";
-              cropLabel.innerHTML = `Wajah ke-${idx + 1}`;
-              previewAfter.appendChild(cropLabel);
-              previewAfter.appendChild(canvas.cloneNode(true));
               console.log(`Wajah ke-${idx + 1} diproses`);
             }
           });
@@ -904,27 +622,27 @@
           }
         }
 
-        // function gaussianBlur(imgData) {
-        //   // Gaussian blur kernel 3x3
-        //   let w = imgData.width,
-        //     h = imgData.height;
-        //   let src = new Uint8ClampedArray(imgData.data);
-        //   let kernel = [1, 2, 1, 2, 4, 2, 1, 2, 1];
-        //   let ksum = 16;
-        //   for (let y = 1; y < h - 1; y++) {
-        //     for (let x = 1; x < w - 1; x++) {
-        //       for (let c = 0; c < 3; c++) {
-        //         let sum = 0,
-        //           idx = 0;
-        //         for (let dy = -1; dy <= 1; dy++)
-        //           for (let dx = -1; dx <= 1; dx++)
-        //             sum +=
-        //               src[4 * ((y + dy) * w + (x + dx)) + c] * kernel[idx++];
-        //         imgData.data[4 * (y * w + x) + c] = sum / ksum;
-        //       }
-        //     }
-        //   }
-        // }
+        function gaussianBlur(imgData) {
+          // Gaussian blur kernel 3x3
+          let w = imgData.width,
+            h = imgData.height;
+          let src = new Uint8ClampedArray(imgData.data);
+          let kernel = [1, 2, 1, 2, 4, 2, 1, 2, 1];
+          let ksum = 16;
+          for (let y = 1; y < h - 1; y++) {
+            for (let x = 1; x < w - 1; x++) {
+              for (let c = 0; c < 3; c++) {
+                let sum = 0,
+                  idx = 0;
+                for (let dy = -1; dy <= 1; dy++)
+                  for (let dx = -1; dx <= 1; dx++)
+                    sum +=
+                      src[4 * ((y + dy) * w + (x + dx)) + c] * kernel[idx++];
+                imgData.data[4 * (y * w + x) + c] = sum / ksum;
+              }
+            }
+          }
+        }
 
         function addNoise(imgData) {
           for (let i = 0; i < imgData.data.length; i += 4) {
@@ -1022,14 +740,14 @@
           );
           console.log(`Totatl Mean: ${mean}  dari ${total} piksel`);
 
-          if (mean >= 180) {
+          if (mean > 180) {
             return {
               tone: "White",
               shade: "Ivory",
               info: "Cocok untuk skin tone white dengan bedak shade Ivory",
               link: "https://www.google.com/search?q=bedak+terbaik+untuk+kulit+putih+ivory",
             };
-          } else if (mean >= 100) {
+          } else if (mean > 100) {
             return {
               tone: "Brown/Tan/Medium",
               shade: "Natural Beige ",
@@ -1269,255 +987,192 @@
         }
 
         // --- MAIN PROCESSING PIPELINE ---
-        // --- PROSES GAMBAR: Per mode, horizontal layout ---
-        function processImage(mode) {
-          let resultsDiv = document.getElementById(
-            mode === "upload" ? "resultsUpload" : "resultsCamera"
-          );
-          resultsDiv.innerHTML = "";
-          let faceCanvases = window.faceCanvases || [];
-          if (faceCanvases.length === 0) {
-            resultsDiv.innerHTML =
-              '<div class="alert alert-warning">Tidak ada wajah yang bisa diproses.</div>';
-            return;
-          }
-          // Legend/keterangan langkah horizontal
-          let legendDiv = document.createElement("div");
-          legendDiv.className =
-            "mb-2 px-2 py-2 bg-white border rounded text-center";
-          legendDiv.style.fontSize = "1em";
-          legendDiv.innerHTML =
-            "<b>Langkah Proses:</b> " +
-            '<span class="badge bg-secondary mx-1">1. Wiener Deblurring</span>' +
-            '<span class="badge bg-secondary mx-1">2. Gaussian Noise</span>' +
-            '<span class="badge bg-secondary mx-1">3. Gaussian Blur</span>' +
-            '<span class="badge bg-secondary mx-1">4. DFT Magnitude</span>' +
-            '<span class="badge bg-secondary mx-1">5. Sobel Edge</span>' +
-            '<span class="badge bg-secondary mx-1">6. Segmentasi Kulit</span>' +
-            '<span class="badge bg-secondary mx-1">7. K-Means Kulit</span>' +
-            '<span class="badge bg-secondary mx-1">8. Klasifikasi & Rekomendasi Shade</span>';
-          resultsDiv.appendChild(legendDiv);
-
-          // List proses dan hasil per proses
-          let prosesList = [
-            {
-              name: "Wiener Deblurring",
-              key: "wiener",
-              desc: "1. Wiener Deblurring (mengurangi blur pada gambar)",
-            },
-            {
-              name: "Gaussian Noise",
-              key: "noise",
-              desc: "2. Gaussian Noise (menambah noise acak)",
-            },
-            {
-              name: "Gaussian Blur",
-              key: "blur",
-              desc: "3. Gaussian Blur (menghaluskan gambar)",
-            },
-            {
-              name: "DFT",
-              key: "dft",
-              desc: "4. DFT Magnitude (statistik frekuensi)",
-            },
-            {
-              name: "Sobel Edge",
-              key: "sobel",
-              desc: "5. Sobel Edge (deteksi tepi)",
-            },
-            {
-              name: "Segmentasi Kulit",
-              key: "segment",
-              desc: "6. Segmentasi Kulit (rule-based)",
-            },
-            {
-              name: "K-Means Kulit",
-              key: "kmeans",
-              desc: "7. K-Means Clustering (segmentasi kulit)",
-            },
-            {
-              name: "Klasifikasi",
-              key: "klasifikasi",
-              desc: "8. Klasifikasi & Rekomendasi Shade",
-            },
-          ];
-          let rowDiv = document.createElement("div");
-          rowDiv.className =
-            "d-flex flex-row flex-nowrap overflow-auto gap-4 mb-3 align-items-end";
-          let prosesResults = prosesList.map(() => []);
-          let summary = {
-            total: faceCanvases.length,
-            tones: {},
-            rgb: [],
-            dft: [],
-          };
-          let toneCount = {};
-          let toneInfo = [];
-          faceCanvases.forEach((faceCanvas, idx) => {
-            let ctx = faceCanvas.getContext("2d");
-            let imgData = ctx.getImageData(
-              0,
-              0,
-              faceCanvas.width,
-              faceCanvas.height
-            );
-            // 1. Wiener Deblurring
-            wienerFilter(imgData);
-            let wienerCanvas = document.createElement("canvas");
-            wienerCanvas.width = faceCanvas.width;
-            wienerCanvas.height = faceCanvas.height;
-            wienerCanvas.getContext("2d").putImageData(imgData, 0, 0);
-            prosesResults[0].push(
-              drawToCanvas(wienerCanvas, null, `Wajah ${idx + 1}`)
-            );
-            // 2. Gaussian Noise
-            addNoise(imgData);
-            let noiseCanvas = document.createElement("canvas");
-            noiseCanvas.width = faceCanvas.width;
-            noiseCanvas.height = faceCanvas.height;
-            noiseCanvas.getContext("2d").putImageData(imgData, 0, 0);
-            prosesResults[1].push(
-              drawToCanvas(noiseCanvas, null, `Wajah ${idx + 1}`)
-            );
-            // 3. Gaussian Blur
-            gaussianBlur(imgData);
-            let blurCanvas = document.createElement("canvas");
-            blurCanvas.width = faceCanvas.width;
-            blurCanvas.height = faceCanvas.height;
-            blurCanvas.getContext("2d").putImageData(imgData, 0, 0);
-            prosesResults[2].push(
-              drawToCanvas(blurCanvas, null, `Wajah ${idx + 1}`)
-            );
-            // 4. DFT
-            let dftMag = dftMagnitude(imgData);
-            summary.dft.push(dftMag);
-            let dftDiv = document.createElement("div");
-            dftDiv.innerHTML = `<small>DFT Magnitude rata-rata: ${dftMag.toFixed(
-              2
-            )}</small>`;
-            prosesResults[3].push(dftDiv);
-            // 5. Sobel Edge
-            let edgeCanvas = document.createElement("canvas");
-            edgeCanvas.width = faceCanvas.width;
-            edgeCanvas.height = faceCanvas.height;
-            let edgeImgData = new ImageData(
-              new Uint8ClampedArray(imgData.data),
-              imgData.width,
-              imgData.height
-            );
-            grayscale(edgeImgData);
-            sobelEdge(edgeImgData);
-            edgeCanvas.getContext("2d").putImageData(edgeImgData, 0, 0);
-            prosesResults[4].push(
-              drawToCanvas(edgeCanvas, null, `Wajah ${idx + 1}`)
-            );
-            // 6. Segmentasi Kulit
-            let segCanvas = document.createElement("canvas");
-            segCanvas.width = faceCanvas.width;
-            segCanvas.height = faceCanvas.height;
-            let segImgData = new ImageData(
-              new Uint8ClampedArray(imgData.data),
-              imgData.width,
-              imgData.height
-            );
-            segmentSkin(segImgData);
-            segCanvas.getContext("2d").putImageData(segImgData, 0, 0);
-            prosesResults[5].push(
-              drawToCanvas(segCanvas, null, `Wajah ${idx + 1}`)
-            );
-            // 7. K-Means Kulit
-            let kmeansCanvas = document.createElement("canvas");
-            kmeansCanvas.width = faceCanvas.width;
-            kmeansCanvas.height = faceCanvas.height;
-            let kmeansImgData = new ImageData(
-              new Uint8ClampedArray(segImgData.data),
-              segImgData.width,
-              segImgData.height
-            );
-            kmeansSegment(kmeansImgData, 2, 10);
-            kmeansCanvas.getContext("2d").putImageData(kmeansImgData, 0, 0);
-            prosesResults[6].push(
-              drawToCanvas(kmeansCanvas, null, `Wajah ${idx + 1}`)
-            );
-            // 8. Klasifikasi
-            let toneResult = classifySkinTone(kmeansImgData);
-            toneCount[toneResult.tone] = (toneCount[toneResult.tone] || 0) + 1;
-            summary.rgb.push(averageRGB(kmeansImgData));
-            toneInfo.push(toneResult);
-            let shadeDiv = document.createElement("div");
-            shadeDiv.className = "shade-info mt-2 mb-2 text-center";
-            shadeDiv.innerHTML = `<b>Warna Kulit:</b> ${toneResult.tone}<br><b>Shade Rekomendasi:</b> ${toneResult.shade}<br><a href="${toneResult.link}" target="_blank">Lihat Bedak di Google</a>`;
-            prosesResults[7].push(shadeDiv);
-          });
-          // Render horizontal row: setiap kolom adalah proses, isinya hasil semua wajah
-          prosesList.forEach((proses, i) => {
-            let colDiv = document.createElement("div");
-            colDiv.className =
-              "d-flex flex-column align-items-center border p-2 rounded bg-light minw-180";
-            let title = document.createElement("div");
-            title.innerHTML = `<b>${proses.name}</b>`;
-            colDiv.appendChild(title);
-            prosesResults[i].forEach((el) => colDiv.appendChild(el));
-            let desc = document.createElement("div");
-            desc.className = "mt-2 text-muted text-center";
-            desc.innerHTML = `<small>${proses.desc}</small>`;
-            colDiv.appendChild(desc);
-            rowDiv.appendChild(colDiv);
-          });
-          resultsDiv.appendChild(rowDiv);
-          // Summary
-          let summaryDiv = document.createElement("div");
-          summaryDiv.className = "shade-info mt-3";
-          let summaryHTML = `<b>Summary:</b><br>Jumlah wajah terdeteksi: ${summary.total}<br>`;
-          Object.keys(toneCount).forEach((tone) => {
-            let percent = ((toneCount[tone] / summary.total) * 100).toFixed(0);
-            summaryHTML += `- ${tone}: ${toneCount[tone]} wajah (${percent}%)<br>`;
-          });
-          // Rata-rata RGB
-          if (summary.rgb.length) {
-            let avgR = 0,
-              avgG = 0,
-              avgB = 0;
-            summary.rgb.forEach((rgb) => {
-              avgR += rgb.r;
-              avgG += rgb.g;
-              avgB += rgb.b;
+        document
+          .getElementById("processBtn")
+          .addEventListener("click", function () {
+            let resultsDiv = document.getElementById("results");
+            resultsDiv.innerHTML = "";
+            let faceCanvases = window.faceCanvases || [];
+            if (faceCanvases.length === 0) {
+              resultsDiv.innerHTML =
+                '<div class="alert alert-warning">Tidak ada wajah yang bisa diproses.</div>';
+              return;
+            }
+            let summary = {
+              total: faceCanvases.length,
+              tones: {},
+              rgb: [],
+              dft: [],
+            };
+            let toneCount = {};
+            let toneInfo = [];
+            faceCanvases.forEach((faceCanvas, idx) => {
+              let ctx = faceCanvas.getContext("2d");
+              let imgData = ctx.getImageData(
+                0,
+                0,
+                faceCanvas.width,
+                faceCanvas.height
+              );
+              // Jika gambar bukan hasil crop wajah (ukuran bukan 256x256), pipeline tetap jalan tanpa resize
+              // 1. Wiener deblurring
+              wienerFilter(imgData);
+              let wienerCanvas = document.createElement("canvas");
+              wienerCanvas.width = faceCanvas.width;
+              wienerCanvas.height = faceCanvas.height;
+              wienerCanvas.getContext("2d").putImageData(imgData, 0, 0);
+              resultsDiv.appendChild(
+                drawToCanvas(
+                  wienerCanvas,
+                  null,
+                  `Wajah ke-${idx + 1}: Wiener Deblurring`
+                )
+              );
+              // 2. Add Gaussian noise
+              addNoise(imgData);
+              let noiseCanvas = document.createElement("canvas");
+              noiseCanvas.width = faceCanvas.width;
+              noiseCanvas.height = faceCanvas.height;
+              noiseCanvas.getContext("2d").putImageData(imgData, 0, 0);
+              resultsDiv.appendChild(
+                drawToCanvas(
+                  noiseCanvas,
+                  null,
+                  `Wajah ke-${idx + 1}: Gaussian Noise`
+                )
+              );
+              // 3. Gaussian blur
+              gaussianBlur(imgData);
+              let blurCanvas = document.createElement("canvas");
+              blurCanvas.width = faceCanvas.width;
+              blurCanvas.height = faceCanvas.height;
+              blurCanvas.getContext("2d").putImageData(imgData, 0, 0);
+              resultsDiv.appendChild(
+                drawToCanvas(
+                  blurCanvas,
+                  null,
+                  `Wajah ke-${idx + 1}: Gaussian Blur`
+                )
+              );
+              // 4. DFT (for statistics/preview)
+              let dftMag = dftMagnitude(imgData);
+              summary.dft.push(dftMag);
+              let dftDiv = document.createElement("div");
+              dftDiv.innerHTML = `<small>DFT Magnitude rata-rata: ${dftMag.toFixed(
+                2
+              )}</small>`;
+              resultsDiv.appendChild(dftDiv);
+              // 5. Sobel edge enhancement
+              let edgeCanvas = document.createElement("canvas");
+              edgeCanvas.width = faceCanvas.width;
+              edgeCanvas.height = faceCanvas.height;
+              let edgeImgData = new ImageData(
+                new Uint8ClampedArray(imgData.data),
+                imgData.width,
+                imgData.height
+              );
+              grayscale(edgeImgData);
+              sobelEdge(edgeImgData);
+              edgeCanvas.getContext("2d").putImageData(edgeImgData, 0, 0);
+              resultsDiv.appendChild(
+                drawToCanvas(
+                  edgeCanvas,
+                  null,
+                  `Wajah ke-${idx + 1}: Sobel Edge`
+                )
+              );
+              // 6. Rule-based skin segmentation
+              let segCanvas = document.createElement("canvas");
+              segCanvas.width = faceCanvas.width;
+              segCanvas.height = faceCanvas.height;
+              let segImgData = new ImageData(
+                new Uint8ClampedArray(imgData.data),
+                imgData.width,
+                imgData.height
+              );
+              segmentSkin(segImgData);
+              segCanvas.getContext("2d").putImageData(segImgData, 0, 0);
+              resultsDiv.appendChild(
+                drawToCanvas(
+                  segCanvas,
+                  null,
+                  `Wajah ke-${idx + 1}: Segmentasi Kulit (Rule-based)`
+                )
+              );
+              // 7. K-means clustering on skin region only
+              let kmeansCanvas = document.createElement("canvas");
+              kmeansCanvas.width = faceCanvas.width;
+              kmeansCanvas.height = faceCanvas.height;
+              let kmeansImgData = new ImageData(
+                new Uint8ClampedArray(segImgData.data),
+                segImgData.width,
+                segImgData.height
+              );
+              kmeansSegment(kmeansImgData, 2, 10);
+              kmeansCanvas.getContext("2d").putImageData(kmeansImgData, 0, 0);
+              resultsDiv.appendChild(
+                drawToCanvas(
+                  kmeansCanvas,
+                  null,
+                  `Wajah ke-${idx + 1}: K-means Clustering (Kulit)`
+                )
+              );
+              // 8. Classification
+              let toneResult = classifySkinTone(kmeansImgData);
+              toneCount[toneResult.tone] =
+                (toneCount[toneResult.tone] || 0) + 1;
+              summary.rgb.push(averageRGB(kmeansImgData));
+              toneInfo.push(toneResult);
+              // Hasil bedak/shade per wajah
+              let shadeDiv = document.createElement("div");
+              shadeDiv.className = "shade-info mt-3";
+              shadeDiv.innerHTML = `<b>Warna Kulit Terdeteksi:</b> ${toneResult.tone}<br><b>Shade Make Up Rekomendasi:</b> ${toneResult.shade}<br><b>Info Bedak:</b> ${toneResult.info}<br><a href="${toneResult.link}" target="_blank">Lihat Bedak Rekomendasi di Google</a>`;
+              resultsDiv.appendChild(shadeDiv);
             });
-            avgR = Math.round(avgR / summary.rgb.length);
-            avgG = Math.round(avgG / summary.rgb.length);
-            avgB = Math.round(avgB / summary.rgb.length);
-            summaryHTML += `Rata-rata RGB kulit: (${avgR}, ${avgG}, ${avgB})<br>`;
-          }
-          // DFT summary
-          if (summary.dft.length) {
-            let avgDFT =
-              summary.dft.reduce((a, b) => a + b, 0) / summary.dft.length;
-            summaryHTML += `Rata-rata DFT Magnitude: ${avgDFT.toFixed(2)}<br>`;
-          }
-          // Rekomendasi shade utama (mayoritas)
-          let mainTone = Object.keys(toneCount).reduce((a, b) =>
-            toneCount[a] > toneCount[b] ? a : b
-          );
-          let mainInfo = toneInfo.find((t) => t.tone === mainTone);
-          if (mainInfo) {
-            summaryHTML += `<b>Rekomendasi Shade Utama:</b> ${mainInfo.shade}<br><b>Info:</b> ${mainInfo.info}<br><a href="${mainInfo.link}" target="_blank">Lihat Bedak Rekomendasi di Google</a>`;
-          }
-          summaryDiv.innerHTML = summaryHTML;
-          resultsDiv.appendChild(summaryDiv);
-        }
-        // Bind process buttons
-        document.addEventListener("DOMContentLoaded", function () {
-          document
-            .getElementById("processBtnUpload")
-            .addEventListener("click", function () {
-              if (currentMode === "upload") processImage("upload");
+            // Summary
+            let summaryDiv = document.createElement("div");
+            summaryDiv.className = "shade-info mt-3";
+            let summaryHTML = `<b>Summary:</b><br>Jumlah wajah terdeteksi: ${summary.total}<br>`;
+            Object.keys(toneCount).forEach((tone) => {
+              let percent = ((toneCount[tone] / summary.total) * 100).toFixed(
+                1
+              );
+              summaryHTML += `- ${tone}: ${toneCount[tone]} wajah (${percent}%)<br>`;
             });
-          document
-            .getElementById("processBtnCamera")
-            .addEventListener("click", function () {
-              if (currentMode === "camera") processImage("camera");
-            });
-        });
+            // Rata-rata RGB
+            if (summary.rgb.length) {
+              let avgR = 0,
+                avgG = 0,
+                avgB = 0;
+              summary.rgb.forEach((rgb) => {
+                avgR += rgb.r;
+                avgG += rgb.g;
+                avgB += rgb.b;
+              });
+              avgR = Math.round(avgR / summary.rgb.length);
+              avgG = Math.round(avgG / summary.rgb.length);
+              avgB = Math.round(avgB / summary.rgb.length);
+              summaryHTML += `Rata-rata RGB kulit: (${avgR}, ${avgG}, ${avgB})<br>`;
+            }
+            // DFT summary
+            if (summary.dft.length) {
+              let avgDFT =
+                summary.dft.reduce((a, b) => a + b, 0) / summary.dft.length;
+              summaryHTML += `Rata-rata DFT Magnitude: ${avgDFT.toFixed(
+                2
+              )}<br>`;
+            }
+            // Rekomendasi shade utama (mayoritas)
+            let mainTone = Object.keys(toneCount).reduce((a, b) =>
+              toneCount[a] > toneCount[b] ? a : b
+            );
+            let mainInfo = toneInfo.find((t) => t.tone === mainTone);
+            if (mainInfo) {
+              summaryHTML += `<b>Rekomendasi Shade Utama:</b> ${mainInfo.shade}<br><b>Info:</b> ${mainInfo.info}<br><a href="${mainInfo.link}" target="_blank">Lihat Bedak Rekomendasi di Google</a>`;
+            }
+            summaryDiv.innerHTML = summaryHTML;
+            resultsDiv.prepend(summaryDiv);
+          });
         // Fungsi rata-rata RGB
         function averageRGB(imgData) {
           let sumR = 0,
@@ -1544,67 +1199,67 @@
         }
 
         // Lucy-Richardson deblurring (manual, iterasi sederhana)
-        // function lucyRichardsonDeblur(imgData, iterations = 5) {
-        //   // Kernel blur sederhana (Gaussian 3x3)
-        //   const kernel = [
-        //     1 / 16,
-        //     2 / 16,
-        //     1 / 16,
-        //     2 / 16,
-        //     4 / 16,
-        //     2 / 16,
-        //     1 / 16,
-        //     2 / 16,
-        //     1 / 16,
-        //   ];
-        //   const w = imgData.width,
-        //     h = imgData.height;
-        //   let estimate = new Float32Array(imgData.data.length);
-        //   for (let i = 0; i < imgData.data.length; i++)
-        //     estimate[i] = imgData.data[i];
-        //   let observed = new Float32Array(imgData.data.length);
-        //   for (let i = 0; i < imgData.data.length; i++)
-        //     observed[i] = imgData.data[i];
-        //   function convolve(src) {
-        //     let dst = new Float32Array(src.length);
-        //     for (let y = 1; y < h - 1; y++) {
-        //       for (let x = 1; x < w - 1; x++) {
-        //         for (let c = 0; c < 3; c++) {
-        //           let sum = 0,
-        //             idx = 0;
-        //           for (let ky = -1; ky <= 1; ky++) {
-        //             for (let kx = -1; kx <= 1; kx++) {
-        //               let px = 4 * ((y + ky) * w + (x + kx)) + c;
-        //               sum += src[px] * kernel[idx++];
-        //             }
-        //           }
-        //           dst[4 * (y * w + x) + c] = sum;
-        //         }
-        //         dst[4 * (y * w + x) + 3] = src[4 * (y * w + x) + 3];
-        //       }
-        //     }
-        //     return dst;
-        //   }
-        //   for (let iter = 0; iter < iterations; iter++) {
-        //     let estimateBlur = convolve(estimate);
-        //     let ratio = new Float32Array(estimate.length);
-        //     for (let i = 0; i < estimate.length; i++) {
-        //       ratio[i] = estimateBlur[i]
-        //         ? observed[i] / (estimateBlur[i] + 1e-6)
-        //         : 0;
-        //     }
-        //     let ratioBlur = convolve(ratio);
-        //     for (let i = 0; i < estimate.length; i++) {
-        //       estimate[i] = Math.max(
-        //         0,
-        //         Math.min(255, estimate[i] * ratioBlur[i])
-        //       );
-        //     }
-        //   }
-        //   for (let i = 0; i < imgData.data.length; i++) {
-        //     imgData.data[i] = estimate[i];
-        //   }
-        // }
+        function lucyRichardsonDeblur(imgData, iterations = 5) {
+          // Kernel blur sederhana (Gaussian 3x3)
+          const kernel = [
+            1 / 16,
+            2 / 16,
+            1 / 16,
+            2 / 16,
+            4 / 16,
+            2 / 16,
+            1 / 16,
+            2 / 16,
+            1 / 16,
+          ];
+          const w = imgData.width,
+            h = imgData.height;
+          let estimate = new Float32Array(imgData.data.length);
+          for (let i = 0; i < imgData.data.length; i++)
+            estimate[i] = imgData.data[i];
+          let observed = new Float32Array(imgData.data.length);
+          for (let i = 0; i < imgData.data.length; i++)
+            observed[i] = imgData.data[i];
+          function convolve(src) {
+            let dst = new Float32Array(src.length);
+            for (let y = 1; y < h - 1; y++) {
+              for (let x = 1; x < w - 1; x++) {
+                for (let c = 0; c < 3; c++) {
+                  let sum = 0,
+                    idx = 0;
+                  for (let ky = -1; ky <= 1; ky++) {
+                    for (let kx = -1; kx <= 1; kx++) {
+                      let px = 4 * ((y + ky) * w + (x + kx)) + c;
+                      sum += src[px] * kernel[idx++];
+                    }
+                  }
+                  dst[4 * (y * w + x) + c] = sum;
+                }
+                dst[4 * (y * w + x) + 3] = src[4 * (y * w + x) + 3];
+              }
+            }
+            return dst;
+          }
+          for (let iter = 0; iter < iterations; iter++) {
+            let estimateBlur = convolve(estimate);
+            let ratio = new Float32Array(estimate.length);
+            for (let i = 0; i < estimate.length; i++) {
+              ratio[i] = estimateBlur[i]
+                ? observed[i] / (estimateBlur[i] + 1e-6)
+                : 0;
+            }
+            let ratioBlur = convolve(ratio);
+            for (let i = 0; i < estimate.length; i++) {
+              estimate[i] = Math.max(
+                0,
+                Math.min(255, estimate[i] * ratioBlur[i])
+              );
+            }
+          }
+          for (let i = 0; i < imgData.data.length; i++) {
+            imgData.data[i] = estimate[i];
+          }
+        }
         // DFT transformasi manual (hanya magnitude, untuk statistik)
         function dftMagnitude(imgData) {
           const w = imgData.width,
