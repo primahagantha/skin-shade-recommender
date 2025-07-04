@@ -338,6 +338,7 @@
               </label>
               <div class="input-group mb-2">
                 <select class="form-select" id="cameraSelect"></select>
+                <div id="cameraPermMsg" class="form-text text-danger mt-1" style="display:none"></div>
                 <button class="neo-btn btn btn-success" id="startCameraBtn">
                   <i class="bi bi-camera-video"></i> Aktifkan Kamera
                 </button>
@@ -345,13 +346,6 @@
                   <i class="bi bi-x-circle"></i> Non-aktifkan Kamera
                 </button>
               </div>
-              <button
-                class="neo-btn btn btn-primary mb-2"
-                id="captureBtn"
-                disabled
-              >
-                <i class="bi bi-camera"></i> Ambil 5 Foto (5 Detik)
-              </button>
               <div class="form-text mb-2">
                 Kamera akan mengambil 5 foto secara otomatis dalam 5 detik.
               </div>
@@ -367,8 +361,15 @@
               <div class="countdown" id="countdown"></div>
             </div>
             <div id="imagePreview" class="mb-4"></div>
+                          <button
+                class="neo-btn btn btn-danger mb-2"
+                id="captureBtn"
+                disabled
+              >
+                <i class="bi bi-magic"></i> Ambil 5 Foto (5 Detik)
+              </button>
             <button
-              class="neo-btn btn btn-danger mb-3"
+              class="neo-btn btn btn-danger mb-3 d-flex"
               id="processBtnCamera"
               disabled
             >
@@ -440,11 +441,20 @@
         if (!navigator.permissions || !navigator.mediaDevices) return;
         try {
           const status = await navigator.permissions.query({ name: 'camera' });
+          // Show message if denied
+          let permMsg = document.getElementById("cameraPermMsg");
+          if (permMsg) {
+            if (status.state === 'denied') {
+              permMsg.textContent = "Akses kamera tidak diizinkan. Silakan aktifkan permission kamera di browser Anda.";
+              permMsg.style.display = "block";
+            } else {
+              permMsg.style.display = "none";
+            }
+          }
           if (status.state === 'prompt') {
             // Try to get camera stream to trigger permission prompt
             navigator.mediaDevices.getUserMedia({ video: true })
               .then(stream => {
-                // Immediately stop tracks, we just want permission
                 stream.getTracks().forEach(track => track.stop());
               })
               .catch(() => {});
@@ -482,11 +492,15 @@
         let faceDetModelLoaded = false;
         let faceBoxes = [];
         let capturedImages = [];
+        let detectFaceLoopRequestId = null;
 
         // Kamera: Enumerasi device
         async function updateCameraList() {
           const select = document.getElementById("cameraSelect");
           select.innerHTML = "";
+          // Hide permission message by default
+          let permMsg = document.getElementById("cameraPermMsg");
+          if (permMsg) permMsg.style.display = "none";
           try {
             const devices = await navigator.mediaDevices.enumerateDevices();
             const videoDevices = devices.filter((d) => d.kind === "videoinput");
@@ -500,6 +514,8 @@
               option.text = label;
               select.appendChild(option);
             });
+
+            
             if (videoDevices.length === 0) {
               select.innerHTML =
                 '<option value="">Tidak ada kamera terdeteksi</option>';
@@ -527,9 +543,23 @@
           const select = document.getElementById("cameraSelect");
           const deviceId = select.value;
           if (!deviceId) return;
+          // Selalu stop stream lama sebelum memulai baru
           if (stream) {
             stream.getTracks().forEach((track) => track.stop());
+            stream = null;
           }
+          // Cancel face detection loop jika ada
+          if (detectFaceLoopRequestId) {
+            cancelAnimationFrame(detectFaceLoopRequestId);
+            detectFaceLoopRequestId = null;
+          }
+          // Reset preview image area
+          let previewDiv = document.querySelector("#cameraArea #imagePreview");
+          if (previewDiv) previewDiv.innerHTML = "";
+          // Reset faceCanvases
+          window.faceCanvases = [];
+          // Disable dropdown saat kamera aktif
+          select.disabled = true;
           try {
             stream = await navigator.mediaDevices.getUserMedia({
               video: { deviceId: { exact: deviceId } },
@@ -539,19 +569,29 @@
             const video = document.getElementById("videoPreview");
             video.srcObject = stream;
             video.style.display = "block";
-            document.getElementById("captureBtn").disabled = false;
-            document.getElementById("cameraStatus").textContent =
-              "Kamera aktif.";
             document.getElementById("faceCanvas").style.display = "block";
-            document.getElementById("stopCameraBtn").style.display =
-              "inline-block";
+            document.getElementById("captureBtn").disabled = false;
+            document.getElementById("cameraStatus").textContent = "Kamera aktif.";
+            document.getElementById("stopCameraBtn").style.display = "inline-block";
             document.getElementById("startCameraBtn").style.display = "none";
+            // Disable dropdown saat kamera aktif
+            select.disabled = true;
             console.log("Kamera diaktifkan");
             detectFaceLoop();
+            // Hide permission message if success
+            let permMsg = document.getElementById("cameraPermMsg");
+            if (permMsg) permMsg.style.display = "none";
           } catch (e) {
-            document.getElementById("cameraStatus").textContent =
-              "Gagal mengaktifkan kamera.";
+            document.getElementById("cameraStatus").textContent = "Gagal mengaktifkan kamera.";
+            // Enable dropdown jika gagal
+            select.disabled = false;
             console.log("Gagal mengaktifkan kamera", e);
+            // Show permission message if error is permission
+            let permMsg = document.getElementById("cameraPermMsg");
+            if (permMsg && (e && (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError'))) {
+              permMsg.textContent = "Akses kamera tidak diizinkan. Silakan aktifkan permission kamera di browser Anda.";
+              permMsg.style.display = "block";
+            }
           }
         };
 
@@ -560,14 +600,27 @@
             stream.getTracks().forEach((track) => track.stop());
             stream = null;
           }
-          document.getElementById("videoPreview").style.display = "none";
+          // Cancel face detection loop jika ada
+          if (detectFaceLoopRequestId) {
+            cancelAnimationFrame(detectFaceLoopRequestId);
+            detectFaceLoopRequestId = null;
+          }
+          // Reset video preview
+          const video = document.getElementById("videoPreview");
+          video.style.display = "none";
+          video.srcObject = null;
           document.getElementById("faceCanvas").style.display = "none";
           document.getElementById("captureBtn").disabled = true;
-          document.getElementById("cameraStatus").textContent =
-            "Kamera non-aktif.";
+          document.getElementById("cameraStatus").textContent = "Kamera non-aktif.";
           document.getElementById("stopCameraBtn").style.display = "none";
-          document.getElementById("startCameraBtn").style.display =
-            "inline-block";
+          document.getElementById("startCameraBtn").style.display = "inline-block";
+          // Enable dropdown saat kamera non-aktif
+          document.getElementById("cameraSelect").disabled = false;
+          // Reset preview image area
+          let previewDiv = document.querySelector("#cameraArea #imagePreview");
+          if (previewDiv) previewDiv.innerHTML = "";
+          // Reset faceCanvases
+          window.faceCanvases = [];
           console.log("Kamera dinonaktifkan");
         };
 
@@ -585,12 +638,12 @@
             }
           }
           async function loop() {
+            if (!stream) return; // Stop loop if stream is gone
             if (video.readyState === 4) {
               canvas.width = video.videoWidth;
               canvas.height = video.videoHeight;
               canvas.style.width = video.style.width = video.offsetWidth + "px";
-              canvas.style.height = video.style.height =
-                video.offsetHeight + "px";
+              canvas.style.height = video.style.height = video.offsetHeight + "px";
               const detections = await faceapi.detectSingleFace(
                 video,
                 new faceapi.TinyFaceDetectorOptions()
@@ -603,10 +656,19 @@
                 faceBoxes[0] = null;
               }
             }
-            requestAnimationFrame(loop);
+            detectFaceLoopRequestId = requestAnimationFrame(loop);
           }
-          loop();
+          detectFaceLoopRequestId = requestAnimationFrame(loop);
         }
+        // Kamera: Ganti device, auto nonaktifkan kamera jika sedang aktif
+        document.getElementById("cameraSelect").addEventListener("change", function () {
+          // Jika kamera sedang aktif, matikan dulu
+          if (stream) {
+            document.getElementById("stopCameraBtn").click();
+          }
+          // Status info
+          document.getElementById("cameraStatus").textContent = "Kamera siap. Silakan klik 'Aktifkan Kamera' untuk memulai kamera baru.";
+        });
 
         document.getElementById("captureBtn").onclick = async function () {
           capturedImages = [];
@@ -1300,6 +1362,19 @@
             mode === "upload" ? "resultsUpload" : "resultsCamera"
           );
           resultsDiv.innerHTML = "";
+
+          // jika tidak ada gambar yang diupload
+          if (mode === "upload" && window.faceCanvases.length === 0){
+            resultsDiv.innerHTML =
+              '<div class="alert alert-warning">Tidak ada gambar yang bisa diproses. Silakan pilih gambar untuk diupload.</div>';
+            return;
+          }
+          // jika tidak ada result kamera ketika tekan button process gambar
+          if (mode === "camera" && window.faceCanvases.length === 0) {
+            resultsDiv.innerHTML =
+              '<div class="alert alert-warning">Tidak ada gambar yang bisa diproses. Silakan pilih kamera -> aktifkan kamera -> ambil foto  dengan tekan tombol ambil 5 foto (5 detik)</div>';
+            return;
+          }
           let faceCanvases = window.faceCanvases || [];
           if (faceCanvases.length === 0) {
             resultsDiv.innerHTML =
