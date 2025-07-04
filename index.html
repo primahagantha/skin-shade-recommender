@@ -435,8 +435,33 @@
         }
         currentMode = mode;
       }
+      // Request camera permission on load (if not already granted/denied)
+      async function requestCameraPermissionIfNeeded() {
+        if (!navigator.permissions || !navigator.mediaDevices) return;
+        try {
+          const status = await navigator.permissions.query({ name: 'camera' });
+          if (status.state === 'prompt') {
+            // Try to get camera stream to trigger permission prompt
+            navigator.mediaDevices.getUserMedia({ video: true })
+              .then(stream => {
+                // Immediately stop tracks, we just want permission
+                stream.getTracks().forEach(track => track.stop());
+              })
+              .catch(() => {});
+          }
+        } catch (e) {
+          // Fallback: try to getUserMedia anyway (older browsers)
+          navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+              stream.getTracks().forEach(track => track.stop());
+            })
+            .catch(() => {});
+        }
+      }
+
       document.addEventListener("DOMContentLoaded", function () {
         showMode("upload"); // default
+        requestCameraPermissionIfNeeded();
         document.getElementById("btnModeUpload").onclick = function () {
           showMode("upload");
         };
